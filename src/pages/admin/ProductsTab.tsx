@@ -54,6 +54,8 @@ interface ProductsTabProps {
     productId: string;
     quantity: string;
   };
+  filteredProductId?: string | null;
+  onClearFilter?: () => void;
   onNewProductChange: (field: 'name' | 'description' | 'price' | 'quantity' | 'imageUrl', value: string) => void;
   onCreateProduct: (e: React.FormEvent) => void;
   onIncrementQuantity: (product: ProductRow) => void;
@@ -74,6 +76,8 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
   newProduct,
   editForm,
   incrementForm,
+  filteredProductId,
+  onClearFilter,
   onNewProductChange,
   onCreateProduct,
   onIncrementQuantity,
@@ -85,11 +89,29 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
   onSaveEditProduct,
   onCancelEdit,
 }) => {
+  // กรองสินค้าตาม filteredProductId
+  const displayedProducts = filteredProductId 
+    ? products.filter(p => p.id === filteredProductId)
+    : products;
   return (
     <>
       <Typography variant="h4" gutterBottom>
         จัดการสินค้า
       </Typography>
+
+      {/* แสดงข้อความเมื่อกรองสินค้าเดี่ยว */}
+      {filteredProductId && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: '#f0f7ff', borderRadius: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2" color="primary">
+            กำลังแสดงสินค้าเดียว: {displayedProducts[0]?.name || 'ไม่พบสินค้า'}
+          </Typography>
+          {onClearFilter && (
+            <Button size="small" onClick={onClearFilter}>
+              แสดงทั้งหมด
+            </Button>
+          )}
+        </Box>
+      )}
       
       {/* Create Product Form */}
       <Box sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
@@ -161,7 +183,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {products.map((product) => (
+              {displayedProducts.map((product) => (
                 <TableRow key={product.id} hover>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>{product.description}</TableCell>

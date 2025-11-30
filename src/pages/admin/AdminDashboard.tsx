@@ -19,9 +19,10 @@ import ProductsTab from './ProductsTab';
 import PermissionsTab from './PermissionsTab';
 import PickingTab from './PickingTab';
 import StockHistoryTab from './StockHistoryTab';
+import NotificationsTab from './NotificationsTab';
 import Profile from './Profile';
 
-type AdminTab = 'overview' | 'products' | 'permissions' | 'picking' | 'stockHistory' | 'profile';
+type AdminTab = 'overview' | 'products' | 'permissions' | 'picking' | 'stockHistory' | 'profile' | 'notifications';
 
 type UserRole = 'customer' | 'staff' | 'admin';
 
@@ -123,6 +124,7 @@ const AdminDashboard = () => {
     productId: '',
     quantity: '1',
   });
+  const [filteredProductId, setFilteredProductId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -523,6 +525,30 @@ const AdminDashboard = () => {
     });
   };
 
+  const handleNavigateToProduct = (productId: string) => {
+    // ไปที่ tab สินค้าและกรองเฉพาะสินค้านั้น
+    setTab('products');
+    setFilteredProductId(productId); // ตั้งค่า productId ที่ต้องการกรอง
+    
+    // หาสินค้าที่ต้องการ
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      console.log('Navigate to product:', product.name);
+    }
+  };
+
+  const handleNavigateToProductOld = (productId: string) => {
+    // ไปที่ tab สินค้าและเลือกสินค้านั้น
+    setTab('products');
+    
+    // หาสินค้าที่ต้องการ
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      // เปิด dialog เพิ่มจำนวนสินค้าเดิม
+      handleIncrementQuantity(product);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -571,6 +597,9 @@ const AdminDashboard = () => {
       case 'stockHistory':
         return <StockHistoryTab />;
 
+      case 'notifications':
+        return <NotificationsTab onNavigateToProduct={handleNavigateToProduct} />;
+
       case 'products':
         return (
           <ProductsTab
@@ -581,6 +610,8 @@ const AdminDashboard = () => {
             newProduct={newProduct}
             editForm={editForm}
             incrementForm={incrementForm}
+            filteredProductId={filteredProductId}
+            onClearFilter={() => setFilteredProductId(null)}
             onNewProductChange={handleNewProductChange}
             onCreateProduct={handleCreateProduct}
             onIncrementQuantity={handleIncrementQuantity}
@@ -653,6 +684,12 @@ const AdminDashboard = () => {
               onClick={() => setTab('stockHistory')}
             >
               <ListItemText primary="ประวัติสต็อก" />
+            </ListItemButton>
+            <ListItemButton
+              selected={tab === 'notifications'}
+              onClick={() => setTab('notifications')}
+            >
+              <ListItemText primary="รายการแจ้งเตือน" />
             </ListItemButton>
             <ListItemButton
               selected={tab === 'products'}
