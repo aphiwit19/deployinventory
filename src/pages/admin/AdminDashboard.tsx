@@ -12,15 +12,16 @@ import {
   CircularProgress,
   Button,
 } from '@mui/material';
-import { getAll, update, add, remove } from '../../services/firestore';
+import { getAll, update, add, remove, getById } from '../../services/firestore';
 import { useNavigate } from 'react-router-dom';
 import OverviewTab from './OverviewTab';
 import ProductsTab from './ProductsTab';
 import PermissionsTab from './PermissionsTab';
 import PickingTab from './PickingTab';
+import StockHistoryTab from './StockHistoryTab';
 import Profile from './Profile';
 
-type AdminTab = 'overview' | 'products' | 'permissions' | 'picking' | 'profile';
+type AdminTab = 'overview' | 'products' | 'permissions' | 'picking' | 'stockHistory' | 'profile';
 
 type UserRole = 'customer' | 'staff' | 'admin';
 
@@ -117,6 +118,10 @@ const AdminDashboard = () => {
     price: '',
     quantity: '',
     imageUrl: '',
+  });
+  const [incrementForm, setIncrementForm] = useState({
+    productId: '',
+    quantity: '1',
   });
 
   useEffect(() => {
@@ -248,6 +253,22 @@ const AdminDashboard = () => {
         },
       ]);
 
+      // บันทึกประวัติการเพิ่มสินค้าใหม่
+      if (quantity > 0) {
+        await add('stockTransactions', {
+          type: 'stock_in',
+          productId: created.id,
+          productName: created.name,
+          quantity: quantity, // บวกเพราะเพิ่มสต็อก
+          remainingStock: quantity,
+          reason: `เพิ่มสินค้าใหม่ ${created.name}`,
+          referenceId: created.id,
+          staffId: currentUser?.uid || '',
+          staffName: 'แอดมิน',
+          createdAt: new Date()
+        });
+      }
+
       // reset create form state
       setNewProduct({ name: '', description: '', price: '', quantity: '', imageUrl: '' });
     } catch (e) {
@@ -257,14 +278,50 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleIncrementQuantity = async (product: ProductRow) => {
-    const newQty = (product.quantity || 0) + 1;
-    setProducts((prev) =>
-      prev.map((p) => (p.id === product.id ? { ...p, quantity: newQty } : p)),
-    );
+  const handleIncrementQuantity = (product: ProductRow) => {
+    setIncrementForm({
+      productId: product.id,
+      quantity: '1',
+    });
+  };
+
+  const handleIncrementFormChange = (value: string) => {
+    setIncrementForm((prev) => ({ ...prev, quantity: value }));
+  };
+
+  const handleSaveIncrement = async () => {
+    const quantity = Number(incrementForm.quantity) || 0;
+    if (quantity <= 0 || !incrementForm.productId) return;
+
+    const product = products.find(p => p.id === incrementForm.productId);
+    if (!product) return;
+
+    const currentQty = product.quantity || 0;
+    const newQty = currentQty + quantity;
 
     try {
-      await update('products', product.id, { quantity: newQty });
+      await update('products', incrementForm.productId, { quantity: newQty });
+      
+      setProducts((prev) =>
+        prev.map((p) => (p.id === incrementForm.productId ? { ...p, quantity: newQty } : p)),
+      );
+      
+      // บันทึกประวัติการเพิ่มสต็อก
+      await add('stockTransactions', {
+        type: 'stock_in',
+        productId: incrementForm.productId,
+        productName: product.name,
+        quantity: quantity,
+        remainingStock: newQty,
+        reason: `เพิ่มสต็อก ${product.name} (${quantity} ชิ้น)`,
+        referenceId: incrementForm.productId,
+        staffId: currentUser?.uid || '',
+        staffName: 'แอดมิน',
+        createdAt: new Date()
+      });
+
+      // รีเซ็ตฟอร์ม
+      setIncrementForm({ productId: '', quantity: '1' });
     } catch (e) {
       console.error('Failed to increment quantity', e);
     }
@@ -308,6 +365,8 @@ const AdminDashboard = () => {
 
     const price = Number(editForm.price) || 0;
     const quantity = Number(editForm.quantity) || 0;
+    const currentQuantity = editingProduct.quantity || 0;
+    const quantityDiff = quantity - currentQuantity; // คำนวณความต่าง
 
     try {
       await update('products', editingProduct.id, {
@@ -332,18 +391,27 @@ const AdminDashboard = () => {
             : p,
         ),
       );
+
+      // บันทึกประวัติการปรับจำนวนสต็อก
+      if (quantityDiff !== 0) {
+        await add('stockTransactions', {
+          type: quantityDiff > 0 ? 'stock_in' : 'stock_out',
+          productId: editingProduct.id,
+          productName: editingProduct.name,
+          quantity: quantityDiff, // บวกถ้าเพิ่ม, ติดลบถ้าลด
+          remainingStock: quantity,
+          reason: `ปรับจำนวนสต็อก ${editingProduct.name} (${currentQuantity} → ${quantity})`,
+          referenceId: editingProduct.id,
+          staffId: currentUser?.uid || '',
+          staffName: 'แอดมิน',
+          createdAt: new Date()
+        });
+      }
+
       setEditingProduct(null);
     } catch (e) {
       console.error('Failed to update product', e);
     }
-  };
-
-  const handleEditPicking = (record: PickingRecord) => {
-    setEditingPicking(record);
-    setPickingForm({
-      trackingNumber: record.trackingNumber || '',
-      shippingMethod: record.shippingMethod || '',
-    });
   };
 
   const handlePickingFormChange = (field: keyof typeof pickingForm, value: string) => {
@@ -367,6 +435,39 @@ const AdminDashboard = () => {
           shippingMethod: pickingForm.shippingMethod.trim(),
           status: 'กำลังจัดส่ง',
         });
+
+        // ลดสต็อกสินค้าจริง!
+        for (const item of editingPicking.items) {
+          const product = await getById('products', item.id) as ProductRow | null;
+          if (product) {
+            const currentQuantity = product.quantity || 0;
+            const orderQuantity = item.quantity;
+            const newQuantity = currentQuantity - orderQuantity;
+            
+            if (newQuantity >= 0) {
+              await update('products', item.id, {
+                quantity: newQuantity
+              });
+              console.log(`ลดสต็อก ${item.name}: ${currentQuantity} → ${newQuantity}`);
+              
+              // บันทึกประวัติการเคลื่อนไหว
+              await add('stockTransactions', {
+                type: 'stock_out',
+                productId: item.id,
+                productName: item.name,
+                quantity: -item.quantity, // ติดลบเพราะออก
+                remainingStock: newQuantity,
+                reason: `จัดส่งออเดอร์ ${editingPicking.orderId}`,
+                referenceId: editingPicking.orderId,
+                staffId: currentUser?.uid || '',
+                staffName: 'แอดมิน',
+                createdAt: new Date()
+              });
+            } else {
+              console.warn(`สต็อกไม่พอสำหรับ ${item.name}: มี ${currentQuantity}, ต้องการ ${orderQuantity}`);
+            }
+          }
+        }
       }
 
       setPickingRecords((prev) =>
@@ -414,12 +515,36 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleEditPicking = (record: PickingRecord) => {
+    setEditingPicking(record);
+    setPickingForm({
+      trackingNumber: record.trackingNumber || '',
+      shippingMethod: record.shippingMethod || '',
+    });
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
       navigate('/login');
     } catch (e) {
       console.error('Failed to logout', e);
+    }
+  };
+
+  // ตรวจสอบสต็อกต่ำกว่า 20%
+  const checkLowStock = async () => {
+    try {
+      const allProducts = await getAll('products');
+      const lowStockItems = (allProducts as ProductRow[]).filter(product => {
+        const currentStock = product.quantity || 0;
+        const minStockThreshold = Math.ceil(product.quantity * 0.2); // 20% ของจำนวนเดิม
+        return currentStock <= minStockThreshold && currentStock > 0; // ต่ำกว่า 20% แต่ยังไม่หมด
+      });
+      return lowStockItems;
+    } catch (e) {
+      console.error('Failed to check low stock', e);
+      return [];
     }
   };
 
@@ -443,6 +568,9 @@ const AdminDashboard = () => {
           />
         );
 
+      case 'stockHistory':
+        return <StockHistoryTab />;
+
       case 'products':
         return (
           <ProductsTab
@@ -452,9 +580,12 @@ const AdminDashboard = () => {
             editingProduct={editingProduct}
             newProduct={newProduct}
             editForm={editForm}
+            incrementForm={incrementForm}
             onNewProductChange={handleNewProductChange}
             onCreateProduct={handleCreateProduct}
             onIncrementQuantity={handleIncrementQuantity}
+            onIncrementFormChange={handleIncrementFormChange}
+            onSaveIncrement={handleSaveIncrement}
             onDeleteProduct={handleDeleteProduct}
             onStartEditProduct={startEditProduct}
             onEditFormChange={handleEditFormChange}
@@ -512,16 +643,22 @@ const AdminDashboard = () => {
               <ListItemText primary="แดชบอร์ดรวม" />
             </ListItemButton>
             <ListItemButton
-              selected={tab === 'products'}
-              onClick={() => setTab('products')}
-            >
-              <ListItemText primary="สินค้า" />
-            </ListItemButton>
-            <ListItemButton
               selected={tab === 'picking'}
               onClick={() => setTab('picking')}
             >
               <ListItemText primary="การเบิก" />
+            </ListItemButton>
+            <ListItemButton
+              selected={tab === 'stockHistory'}
+              onClick={() => setTab('stockHistory')}
+            >
+              <ListItemText primary="ประวัติสต็อก" />
+            </ListItemButton>
+            <ListItemButton
+              selected={tab === 'products'}
+              onClick={() => setTab('products')}
+            >
+              <ListItemText primary="สินค้า" />
             </ListItemButton>
             <ListItemButton
               selected={tab === 'permissions'}

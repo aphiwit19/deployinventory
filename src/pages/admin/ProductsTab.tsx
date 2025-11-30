@@ -50,9 +50,15 @@ interface ProductsTabProps {
     quantity: string;
     imageUrl: string;
   };
+  incrementForm: {
+    productId: string;
+    quantity: string;
+  };
   onNewProductChange: (field: 'name' | 'description' | 'price' | 'quantity' | 'imageUrl', value: string) => void;
   onCreateProduct: (e: React.FormEvent) => void;
   onIncrementQuantity: (product: ProductRow) => void;
+  onIncrementFormChange: (value: string) => void;
+  onSaveIncrement: () => void;
   onDeleteProduct: (product: ProductRow) => void;
   onStartEditProduct: (product: ProductRow) => void;
   onEditFormChange: (field: 'name' | 'description' | 'price' | 'quantity' | 'imageUrl', value: string) => void;
@@ -67,9 +73,12 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
   editingProduct,
   newProduct,
   editForm,
+  incrementForm,
   onNewProductChange,
   onCreateProduct,
   onIncrementQuantity,
+  onIncrementFormChange,
+  onSaveIncrement,
   onDeleteProduct,
   onStartEditProduct,
   onEditFormChange,
@@ -243,6 +252,33 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
           <Button onClick={onCancelEdit}>ยกเลิก</Button>
           <Button onClick={onSaveEditProduct} variant="contained">
             บันทึก
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Increment Quantity Dialog */}
+      <Dialog 
+        open={!!incrementForm.productId} 
+        onClose={() => onIncrementFormChange('1')}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>เพิ่มจำนวนสินค้า</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="จำนวนที่ต้องการเพิ่ม"
+            type="number"
+            value={incrementForm.quantity}
+            onChange={(e) => onIncrementFormChange(e.target.value)}
+            fullWidth
+            inputProps={{ min: 1, step: 1 }}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => onIncrementFormChange('1')}>ยกเลิก</Button>
+          <Button onClick={onSaveIncrement} variant="contained">
+            เพิ่มสต็อก
           </Button>
         </DialogActions>
       </Dialog>
