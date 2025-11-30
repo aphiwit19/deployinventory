@@ -14,8 +14,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../firebase';
+import { useAuth } from '../../contexts/AuthContext';
 import { getAll } from '../../services/firestore';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -31,6 +30,7 @@ interface Product {
 
 function Dashboard() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
   const [cartCount, setCartCount] = useState(0);
@@ -67,10 +67,10 @@ function Dashboard() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       navigate('/login');
     } catch (error) {
-      console.error('Logout failed', error);
+      console.error('Failed to logout', error);
     }
   };
 

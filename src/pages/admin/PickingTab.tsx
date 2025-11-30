@@ -16,6 +16,10 @@ import {
   DialogActions,
   TextField,
   Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 
 interface OrderItem {
@@ -41,6 +45,7 @@ interface PickingRecord {
   pickedAt: any;
   status: string;
   trackingNumber: string;
+  shippingMethod: string;
   shippingNotes: string;
 }
 
@@ -50,12 +55,13 @@ interface PickingTabProps {
   editingPicking: PickingRecord | null;
   pickingForm: {
     trackingNumber: string;
-    shippingNotes: string;
+    shippingMethod: string;
   };
   onEditPicking: (record: PickingRecord) => void;
-  onPickingFormChange: (field: 'trackingNumber' | 'shippingNotes', value: string) => void;
+  onPickingFormChange: (field: 'trackingNumber' | 'shippingMethod', value: string) => void;
   onSavePicking: () => void;
   onCancelEdit: () => void;
+  onMarkAsDelivered: (record: PickingRecord) => void;
 }
 
 const PickingTab: React.FC<PickingTabProps> = ({
@@ -67,6 +73,7 @@ const PickingTab: React.FC<PickingTabProps> = ({
   onPickingFormChange,
   onSavePicking,
   onCancelEdit,
+  onMarkAsDelivered,
 }) => {
   return (
     <>
@@ -74,7 +81,7 @@ const PickingTab: React.FC<PickingTabProps> = ({
         การเบิกสินค้า
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-        รายการที่สตาฟเบิกสินค้าแล้ว รอดำเนินการจัดส่ง
+        รายการที่สตาฟแจ้งเบิกสินค้าแล้ว รอดำเนินการจัดส่ง
       </Typography>
       
       {loadingPickingRecords ? (
@@ -90,11 +97,12 @@ const PickingTab: React.FC<PickingTabProps> = ({
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>ผู้เบิก</TableCell>
+                <TableCell>ชื่อพนักงาน</TableCell>
                 <TableCell>ลูกค้า</TableCell>
                 <TableCell>ที่อยู่จัดส่ง</TableCell>
                 <TableCell>วันที่เบิก</TableCell>
                 <TableCell>ยอดรวม</TableCell>
+                <TableCell>ขนส่ง</TableCell>
                 <TableCell>เลขพัสดุ</TableCell>
                 <TableCell>สถานะ</TableCell>
                 <TableCell>จัดการ</TableCell>
@@ -120,6 +128,13 @@ const PickingTab: React.FC<PickingTabProps> = ({
                     })}
                   </TableCell>
                   <TableCell>
+                    {record.shippingMethod || (
+                      <Typography variant="body2" color="text.secondary">
+                        ยังไม่ระบุ
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     {record.trackingNumber || (
                       <Typography variant="body2" color="text.secondary">
                         ยังไม่มี
@@ -130,7 +145,9 @@ const PickingTab: React.FC<PickingTabProps> = ({
                     <Chip
                       label={record.status}
                       color={
-                        record.status === 'จัดส่งแล้ว'
+                        record.status === 'จัดส่งสำเร็จ'
+                          ? 'success'
+                          : record.status === 'จัดส่งแล้ว'
                           ? 'success'
                           : record.status === 'กำลังจัดส่ง'
                           ? 'warning'
@@ -140,9 +157,17 @@ const PickingTab: React.FC<PickingTabProps> = ({
                     />
                   </TableCell>
                   <TableCell>
-                    <Button variant="outlined" size="small" onClick={() => onEditPicking(record)}>
-                      จัดการขนส่ง
-                    </Button>
+                    {record.status === 'จัดส่งแล้ว' ? (
+                      <Button variant="contained" color="success" size="small" onClick={() => onMarkAsDelivered(record)}>
+                        ยืนยันส่งสำเร็จ
+                      </Button>
+                    ) : record.status === 'จัดส่งสำเร็จ' ? (
+                      <Chip label="ส่งสำเร็จแล้ว" color="success" size="small" />
+                    ) : (
+                      <Button variant="outlined" size="small" onClick={() => onEditPicking(record)}>
+                        จัดการขนส่ง
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -155,19 +180,25 @@ const PickingTab: React.FC<PickingTabProps> = ({
       <Dialog open={!!editingPicking} onClose={onCancelEdit} fullWidth maxWidth="sm">
         <DialogTitle>จัดการขนส่ง</DialogTitle>
         <DialogContent sx={{ pt: 2, display: 'grid', gap: 2 }}>
+          <FormControl fullWidth>
+            <InputLabel>ขนส่ง</InputLabel>
+            <Select
+              value={pickingForm.shippingMethod}
+              onChange={(e) => onPickingFormChange('shippingMethod', e.target.value)}
+              label="ขนส่ง"
+            >
+              <MenuItem value="EMS">EMS</MenuItem>
+              <MenuItem value="ไปรษณีย์ไทย">ไปรษณีย์ไทย</MenuItem>
+              <MenuItem value="Kerry">Kerry</MenuItem>
+              <MenuItem value="J&T">J&T</MenuItem>
+              <MenuItem value="Flash">Flash</MenuItem>
+            </Select>
+          </FormControl>
           <TextField
             label="เลขพัสดุ"
             value={pickingForm.trackingNumber}
             onChange={(e) => onPickingFormChange('trackingNumber', e.target.value)}
             placeholder="กรอกเลขพัสดุ"
-          />
-          <TextField
-            label="หมายเหตุการจัดส่ง"
-            value={pickingForm.shippingNotes}
-            onChange={(e) => onPickingFormChange('shippingNotes', e.target.value)}
-            multiline
-            minRows={2}
-            placeholder="บันทึกเพิ่มเติมเกี่ยวกับการจัดส่ง"
           />
         </DialogContent>
         <DialogActions>

@@ -34,6 +34,7 @@ interface Order {
   address: string;
   status?: string; // เช่น 'รอดำเนินการ', 'กำลังจัดส่ง', 'จัดส่งสำเร็จ'
   trackingNumber?: string;
+  shippingMethod?: string;
 }
 
 const Orders = () => {
@@ -115,6 +116,26 @@ const Orders = () => {
                   </Typography>
                   <Typography variant="body2" color="secondary">
                     {order.trackingNumber}
+                  </Typography>
+                </Box>
+              )}
+              {order.shippingMethod && (
+                <Box sx={{ px: 2, py: 1, backgroundColor: '#e8f5e8', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    ขนส่ง
+                  </Typography>
+                  <Typography variant="body2" color="success.main">
+                    {order.shippingMethod}
+                  </Typography>
+                </Box>
+              )}
+              {!order.shippingMethod && (
+                <Box sx={{ px: 2, py: 1, backgroundColor: '#fff3e0', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    ขนส่ง
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    รอแอดมินยืนยัน
                   </Typography>
                 </Box>
               )}

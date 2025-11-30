@@ -16,10 +16,11 @@ import { getAll, update, add, remove } from '../../services/firestore';
 import { useNavigate } from 'react-router-dom';
 import OverviewTab from './OverviewTab';
 import ProductsTab from './ProductsTab';
-import PickingTab from './PickingTab';
 import PermissionsTab from './PermissionsTab';
+import PickingTab from './PickingTab';
+import Profile from './Profile';
 
-type AdminTab = 'overview' | 'products' | 'permissions' | 'picking';
+type AdminTab = 'overview' | 'products' | 'permissions' | 'picking' | 'profile';
 
 type UserRole = 'customer' | 'staff' | 'admin';
 
@@ -28,6 +29,10 @@ interface UserRow {
   email?: string;
   role?: UserRole;
   uid?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  createdAt?: any;
 }
 
 interface ProductRow {
@@ -75,6 +80,7 @@ interface PickingRecord {
   pickedAt: any;
   status: string;
   trackingNumber: string;
+  shippingMethod: string;
   shippingNotes: string;
 }
 
@@ -96,7 +102,7 @@ const AdminDashboard = () => {
   const [editingPicking, setEditingPicking] = useState<PickingRecord | null>(null);
   const [pickingForm, setPickingForm] = useState({
     trackingNumber: '',
-    shippingNotes: '',
+    shippingMethod: '',
   });
   const [editForm, setEditForm] = useState({
     name: '',
@@ -336,7 +342,7 @@ const AdminDashboard = () => {
     setEditingPicking(record);
     setPickingForm({
       trackingNumber: record.trackingNumber || '',
-      shippingNotes: record.shippingNotes || '',
+      shippingMethod: record.shippingMethod || '',
     });
   };
 
@@ -350,7 +356,7 @@ const AdminDashboard = () => {
     try {
       await update('picking', editingPicking.id, {
         trackingNumber: pickingForm.trackingNumber.trim(),
-        shippingNotes: pickingForm.shippingNotes.trim(),
+        shippingMethod: pickingForm.shippingMethod.trim(),
         status: pickingForm.trackingNumber ? 'จัดส่งแล้ว' : 'รอดำเนินการ',
       });
 
@@ -358,6 +364,7 @@ const AdminDashboard = () => {
       if (pickingForm.trackingNumber) {
         await update('orders', editingPicking.orderId, {
           trackingNumber: pickingForm.trackingNumber.trim(),
+          shippingMethod: pickingForm.shippingMethod.trim(),
           status: 'กำลังจัดส่ง',
         });
       }
@@ -368,16 +375,42 @@ const AdminDashboard = () => {
             ? {
                 ...p,
                 trackingNumber: pickingForm.trackingNumber.trim(),
-                shippingNotes: pickingForm.shippingNotes.trim(),
+                shippingMethod: pickingForm.shippingMethod.trim(),
                 status: pickingForm.trackingNumber ? 'จัดส่งแล้ว' : 'รอดำเนินการ',
               }
             : p,
         ),
       );
       setEditingPicking(null);
-      setPickingForm({ trackingNumber: '', shippingNotes: '' });
+      setPickingForm({ trackingNumber: '', shippingMethod: '' });
     } catch (e) {
       console.error('Failed to update picking record', e);
+    }
+  };
+
+  const handleMarkAsDelivered = async (record: PickingRecord) => {
+    try {
+      // อัปเดตสถานะใน orders เป็น 'จัดส่งสำเร็จ'
+      await update('orders', record.orderId, {
+        status: 'จัดส่งสำเร็จ',
+      });
+
+      // อัปเดตสถานะใน picking เป็น 'จัดส่งสำเร็จ'
+      await update('picking', record.id, {
+        status: 'จัดส่งสำเร็จ',
+      });
+
+      // อัปเดต state ในหน้าแอดมิน
+      setPickingRecords((prev) =>
+        prev.map((p) =>
+          p.id === record.id ? { ...p, status: 'จัดส่งสำเร็จ' } : p
+        )
+      );
+
+      // ลบออเดอร์ที่ส่งสำเร็จออกจากรายการแอดมิน
+      setOrders((prev) => prev.filter((o) => o.id !== record.orderId));
+    } catch (e) {
+      console.error('Failed to mark as delivered', e);
     }
   };
 
@@ -390,7 +423,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const renderContent = (): React.ReactElement => {
+  const renderContent = () => {
     switch (tab) {
       case 'overview':
         return <OverviewTab />;
@@ -406,6 +439,7 @@ const AdminDashboard = () => {
             onPickingFormChange={handlePickingFormChange}
             onSavePicking={handleSavePicking}
             onCancelEdit={() => setEditingPicking(null)}
+            onMarkAsDelivered={handleMarkAsDelivered}
           />
         );
 
@@ -438,6 +472,9 @@ const AdminDashboard = () => {
             onRoleChange={handleRoleChange}
           />
         );
+
+      case 'profile':
+        return <Profile />;
 
       default:
         return <OverviewTab />;
@@ -491,6 +528,12 @@ const AdminDashboard = () => {
               onClick={() => setTab('permissions')}
             >
               <ListItemText primary="จัดการสิทธิ์" />
+            </ListItemButton>
+            <ListItemButton
+              selected={tab === 'profile'}
+              onClick={() => setTab('profile')}
+            >
+              <ListItemText primary="โปรไฟล์" />
             </ListItemButton>
           </List>
           <Divider />

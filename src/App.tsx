@@ -6,7 +6,7 @@ import Dashboard from './pages/customer/Dashboard';
 import Profile from './pages/customer/Profile';
 import Cart from './pages/customer/Cart';
 import Orders from './pages/customer/Orders';
-import Pick from './pages/staff/Pick';
+import PickingConfirm from './pages/staff/PickingConfirm';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import Login from './pages/auth/Login';
@@ -98,7 +98,7 @@ function App() {
               path="/staff/pick/:orderId"
               element={(
                 <ProtectedRoute>
-                  <Pick />
+                  <PickingConfirm />
                 </ProtectedRoute>
               )}
             />

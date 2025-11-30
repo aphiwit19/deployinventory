@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, TextField, Button, Typography, Paper, Container } from '@mui/material';
 import { register } from '../../services/auth';
 import { add } from '../../services/firestore';
+import { Timestamp } from 'firebase/firestore';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -27,7 +28,7 @@ const Register = () => {
       await add('users', {
         uid: cred.user.uid,
         email: cred.user.email,
-        createdAt: new Date().toISOString(),
+        createdAt: Timestamp.now(),
         role: 'customer',
       });
       navigate('/');

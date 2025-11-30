@@ -20,6 +20,10 @@ interface UserRow {
   email?: string;
   role?: UserRole;
   uid?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  createdAt?: any;
 }
 
 interface PermissionsTabProps {
@@ -52,16 +56,28 @@ const PermissionsTab: React.FC<PermissionsTabProps> = ({
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Email</TableCell>
-              <TableCell>UID</TableCell>
-              <TableCell align="right">Role</TableCell>
+              <TableCell>ชื่อ</TableCell>
+              <TableCell>อีเมล</TableCell>
+              <TableCell>เบอร์โทร</TableCell>
+              <TableCell>สมัครเมื่อ</TableCell>
+              <TableCell align="right">บทบาท</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id} hover>
+                <TableCell>
+                  {user.firstName && user.lastName
+                    ? `${user.firstName} ${user.lastName}`
+                    : user.email || '-'}
+                </TableCell>
                 <TableCell>{user.email || '-'}</TableCell>
-                <TableCell>{user.uid || '-'}</TableCell>
+                <TableCell>{user.phone || '-'}</TableCell>
+                <TableCell>
+                  {user.createdAt?.toDate?.().toLocaleDateString('th-TH') ||
+                   (typeof user.createdAt === 'string' ? new Date(user.createdAt).toLocaleDateString('th-TH') : '-') ||
+                   '-'}
+                </TableCell>
                 <TableCell align="right">
                   <Select
                     size="small"

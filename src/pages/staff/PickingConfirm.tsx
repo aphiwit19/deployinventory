@@ -4,12 +4,6 @@ import {
   Typography,
   Paper,
   CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Button,
   Chip,
   Divider,
@@ -18,7 +12,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { getAll, add, update } from '../../services/firestore';
+import { getAll, add, update, queryDocs } from '../../services/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface OrderItem {
@@ -42,7 +36,7 @@ interface Order {
   trackingNumber?: string;
 }
 
-const Pick = () => {
+const PickingConfirm = () => {
   const navigate = useNavigate();
   const { orderId } = useParams<{ orderId: string }>();
   const location = useLocation();
@@ -50,6 +44,24 @@ const Pick = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
+
+  // ฟังก์ชันดึงชื่อพนักงานจาก Profile
+  const getStaffDisplayName = async (staffId: string): Promise<string> => {
+    try {
+      const staffProfiles = await queryDocs('users', 'uid', '==', staffId);
+      const staffProfile = staffProfiles[0] as any;
+      
+      if (staffProfile && staffProfile.firstName && staffProfile.lastName) {
+        return `${staffProfile.firstName} ${staffProfile.lastName}`;
+      }
+      
+      // ถ้าไม่มี Profile ให้ใช้ email
+      return currentUser?.email || 'พนักงาน';
+    } catch (e) {
+      console.error('Failed to get staff display name', e);
+      return currentUser?.email || 'พนักงาน';
+    }
+  };
 
   const handleBackToOrders = () => {
     // ถ้ามาจากหน้า staff dashboard ให้กลับไปที่เดิมและเลือกแถบคำสั่งซื้อ
@@ -68,7 +80,7 @@ const Pick = () => {
       await add('picking', {
         orderId: order.id,
         staffId: currentUser.uid,
-        staffName: currentUser.email || 'พนักงาน',
+        staffName: await getStaffDisplayName(currentUser.uid),
         items: order.items,
         total: order.total,
         customerInfo: {
@@ -77,7 +89,7 @@ const Pick = () => {
           address: order.address,
         },
         pickedAt: new Date(),
-        status: 'รอดำเนินการ',
+        status: 'แจ้งเบิก',
         trackingNumber: '',
         shippingNotes: '',
       });
@@ -127,7 +139,7 @@ const Pick = () => {
           ไม่พบคำสั่งซื้อนี้
         </Typography>
         <Button variant="outlined" sx={{ mt: 2 }} onClick={handleBackToOrders}>
-          กลับไปหน้าสตาฟ
+          กลับไปหน้าจัดการคำสั่งซื้อ
         </Button>
       </Box>
     );
@@ -137,7 +149,7 @@ const Pick = () => {
     <Box sx={{ p: 3, backgroundColor: '#f5f7fb', minHeight: '100vh' }}>
       <Box sx={{ maxWidth: 900, mx: 'auto' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-          เบิกสินค้า: คำสั่งซื้อ #{order.id}
+          ยืนยันการเบิกสินค้า: คำสั่งซื้อ #{order.id}
         </Typography>
 
         {/* Order Info */}
@@ -147,104 +159,73 @@ const Pick = () => {
           </Typography>
           <List dense>
             <ListItem>
-              <ListItemText primary="ชื่อ" secondary={order.fullName} />
+              <ListItemText primary="ชื่อ-นามสกุล" secondary={order.fullName} />
             </ListItem>
             <ListItem>
-              <ListItemText primary="เบอร์โทร" secondary={order.phone} />
+              <ListItemText primary="เบอร์โทรศัพท์" secondary={order.phone} />
             </ListItem>
             <ListItem>
               <ListItemText primary="ที่อยู่จัดส่ง" secondary={order.address} />
             </ListItem>
-            <ListItem>
-              <ListItemText
-                primary="วันที่สั่งซื้อ"
-                secondary={
-                  order.createdAt?.toDate?.().toLocaleString('th-TH') ||
-                  order.createdAt?.toLocaleString?.('th-TH') ||
-                  '-'
-                }
-              />
-            </ListItem>
           </List>
-          <Divider sx={{ my: 2 }} />
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Typography variant="subtitle2">สถานะ:</Typography>
-            <Chip
-              label={order.status || 'รอดำเนินการ'}
-              color={
-                order.status === 'จัดส่งสำเร็จ'
-                  ? 'success'
-                  : order.status === 'กำลังจัดส่ง'
-                  ? 'warning'
-                  : 'default'
-              }
-              size="small"
-            />
-            {order.trackingNumber && (
-              <>
-                <Typography variant="subtitle2">เลขพัสดุ:</Typography>
-                <Typography variant="body2">{order.trackingNumber}</Typography>
-              </>
-            )}
-          </Box>
         </Paper>
 
-        {/* Items to Pick */}
+        {/* Order Items */}
         <Paper sx={{ p: 3, mb: 3 }} elevation={1}>
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-            รายการสินค้าที่ต้องเบิก
+            รายการสินค้า
           </Typography>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>สินค้า</TableCell>
-                  <TableCell align="right">จำนวน</TableCell>
-                  <TableCell align="right">ราคา/ชิ้น</TableCell>
-                  <TableCell align="right">รวม</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {order.items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell align="right">{item.quantity}</TableCell>
-                    <TableCell align="right">
-                      {item.price.toLocaleString('th-TH', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </TableCell>
-                    <TableCell align="right">
-                      {(item.price * item.quantity).toLocaleString('th-TH', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow>
-                  <TableCell colSpan={3} sx={{ fontWeight: 600 }}>
-                    ยอดรวม
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>
-                    {order.total.toLocaleString('th-TH', {
+          <List dense>
+            {order.items.map((item, index) => (
+              <Box key={item.id || index}>
+                <ListItem sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {item.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      จำนวน: {item.quantity} ชิ้น
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {(item.price * item.quantity).toLocaleString('th-TH', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
+                    })} บาท
+                  </Typography>
+                </ListItem>
+                {index < order.items.length - 1 && <Divider />}
+              </Box>
+            ))}
+          </List>
+        </Paper>
+
+        {/* Order Summary */}
+        <Paper sx={{ p: 3, mb: 3 }} elevation={1}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              ยอดรวมทั้งหมด
+            </Typography>
+            <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
+              {order.total.toLocaleString('th-TH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })} บาท
+            </Typography>
+          </Box>
         </Paper>
 
         {/* Actions */}
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
           <Button variant="outlined" onClick={handleBackToOrders}>
-            กลับ
+            ยกเลิก
           </Button>
-          <Button variant="contained" color="primary" onClick={handleConfirmPick} disabled={confirming}>
+          <Button 
+            variant="contained" 
+            onClick={handleConfirmPick}
+            disabled={confirming}
+            startIcon={confirming && <CircularProgress size={20} />}
+          >
             {confirming ? 'กำลังยืนยัน...' : 'ยืนยันการเบิกสินค้า'}
           </Button>
         </Box>
@@ -253,4 +234,4 @@ const Pick = () => {
   );
 };
 
-export default Pick;
+export default PickingConfirm;
