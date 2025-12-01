@@ -30,10 +30,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const theme = useTheme();
   const location = useLocation();
   
-  // Check if current route is a dashboard page
-  const isDashboardPage = location.pathname === '/' || 
-                          location.pathname === '/admin' || 
-                          location.pathname === '/staff';
+  // Check if current route is home page only
+  const isDashboardPage = location.pathname === '/';
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

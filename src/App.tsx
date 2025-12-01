@@ -134,8 +134,8 @@ const ProtectedRoute = ({ children }: { children: ReactElement }) => {
 const RoleBasedDashboard = () => {
   const { role } = useAuth();
 
-  if (role === 'admin') return <AdminDashboard />;
-  if (role === 'staff') return <StaffDashboard />;
+  if (role === 'admin') return <Navigate to="/admin" replace />;
+  if (role === 'staff') return <Navigate to="/staff" replace />;
 
   // default
   return <Dashboard />;
@@ -180,6 +180,22 @@ function App() {
                 element={(
                   <ProtectedRoute>
                     <Orders />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/admin"
+                element={(
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/staff"
+                element={(
+                  <ProtectedRoute>
+                    <StaffDashboard />
                   </ProtectedRoute>
                 )}
               />
