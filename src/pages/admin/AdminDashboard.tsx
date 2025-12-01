@@ -7,11 +7,30 @@ import {
   List,
   ListItemButton,
   ListItemText,
+  ListItemIcon,
   Divider,
   Paper,
   CircularProgress,
   Button,
+  Avatar,
+  Tooltip,
+  IconButton,
+  useTheme,
+  alpha,
 } from '@mui/material';
+import {
+  Dashboard,
+  Inventory,
+  LocalShipping,
+  History,
+  Notifications,
+  Category,
+  Security,
+  Person,
+  Logout,
+  Brightness7,
+  Settings,
+} from '@mui/icons-material';
 import { getAll, update, add, remove, getById } from '../../services/firestore';
 import { uploadImage, generateImagePath } from '../../services/storage';
 import { useNavigate } from 'react-router-dom';
@@ -90,6 +109,7 @@ interface PickingRecord {
 const AdminDashboard = () => {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [tab, setTab] = useState<AdminTab>('overview');
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -697,101 +717,222 @@ const AdminDashboard = () => {
     }
   };
 
+  // Menu items configuration
+  const menuItems = [
+    { id: 'overview', label: 'แดชบอร์ดรวม', icon: <Dashboard /> },
+    { id: 'picking', label: 'การเบิก', icon: <LocalShipping /> },
+    { id: 'stockHistory', label: 'ประวัติสต็อก', icon: <History /> },
+    { id: 'notifications', label: 'รายการแจ้งเตือน', icon: <Notifications /> },
+    { id: 'products', label: 'สินค้า', icon: <Category /> },
+    { id: 'permissions', label: 'จัดการสิทธิ์', icon: <Security /> },
+    { id: 'profile', label: 'โปรไฟล์', icon: <Person /> },
+  ];
+
   return (
     <>
+      {/* Sidebar - Fixed */}
       <Box
         sx={{
-          display: 'flex',
-          minHeight: '100vh',
-          backgroundColor: '#f5f5f5',
+          width: 280,
+          background: 'linear-gradient(180deg, #1e40af 0%, #3730a3 100%)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          height: '100vh',
+          zIndex: 1000,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+            pointerEvents: 'none',
+          }
         }}
       >
-        {/* Sidebar */}
-        <Box
-          sx={{
-            width: 240,
-            backgroundColor: '#ffffff',
-            borderRight: '1px solid #e0e0e0',
-          }}
-        >
-          <Box sx={{ p: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Admin Panel
-            </Typography>
-          </Box>
-          <Divider />
-          <List component="nav">
-            <ListItemButton
-              selected={tab === 'overview'}
-              onClick={() => setTab('overview')}
+        {/* Header */}
+        <Box sx={{ 
+          p: 3, 
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          position: 'relative',
+          zIndex: 1
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Avatar
+              sx={{
+                width: 48,
+                height: 48,
+                background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
+                boxShadow: '0 4px 12px rgba(96, 165, 250, 0.3)',
+                mr: 2
+              }}
             >
-              <ListItemText primary="แดชบอร์ดรวม" />
-            </ListItemButton>
-            <ListItemButton
-              selected={tab === 'picking'}
-              onClick={() => setTab('picking')}
-            >
-              <ListItemText primary="การเบิก" />
-            </ListItemButton>
-            <ListItemButton
-              selected={tab === 'stockHistory'}
-              onClick={() => setTab('stockHistory')}
-            >
-              <ListItemText primary="ประวัติสต็อก" />
-            </ListItemButton>
-            <ListItemButton
-              selected={tab === 'notifications'}
-              onClick={() => setTab('notifications')}
-            >
-              <ListItemText primary="รายการแจ้งเตือน" />
-            </ListItemButton>
-            <ListItemButton
-              selected={tab === 'products'}
-              onClick={() => setTab('products')}
-            >
-              <ListItemText primary="สินค้า" />
-            </ListItemButton>
-            <ListItemButton
-              selected={tab === 'permissions'}
-              onClick={() => setTab('permissions')}
-            >
-              <ListItemText primary="จัดการสิทธิ์" />
-            </ListItemButton>
-            <ListItemButton
-              selected={tab === 'profile'}
-              onClick={() => setTab('profile')}
-            >
-              <ListItemText primary="โปรไฟล์" />
-            </ListItemButton>
-          </List>
-          <Divider />
-          <Box sx={{ p: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              ผู้ใช้: {currentUser?.email}
-            </Typography>
-            <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              onClick={handleLogout}
-              fullWidth
-            >
-              ออกจากระบบ
-            </Button>
+              <Brightness7 sx={{ color: 'white' }} />
+            </Avatar>
+            <Box>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 700, 
+                  color: 'white',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}
+              >
+                Admin Panel
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: '0.75rem'
+                }}
+              >
+                ระบบจัดการครบวงจร
+              </Typography>
+            </Box>
           </Box>
         </Box>
 
-        {/* Main content */}
-        <Box sx={{ flex: 1, p: 3 }}>
-          <Paper sx={{ p: 3 }} elevation={2}>
-            {renderContent()}
-          </Paper>
+        {/* Navigation Menu */}
+        <Box sx={{ flex: 1, py: 2, position: 'relative', zIndex: 1 }}>
+          {menuItems.map((item) => (
+            <ListItemButton
+              key={item.id}
+              selected={tab === item.id}
+              onClick={() => setTab(item.id as AdminTab)}
+              sx={{
+                mx: 2,
+                mb: 1,
+                borderRadius: 2,
+                px: 2,
+                py: 1.5,
+                color: tab === item.id ? 'white' : 'rgba(255,255,255,0.8)',
+                background: tab === item.id 
+                  ? 'linear-gradient(135deg, rgba(96, 165, 250, 0.3) 0%, rgba(59, 130, 246, 0.2) 100%)'
+                  : 'transparent',
+                border: tab === item.id 
+                  ? '1px solid rgba(96, 165, 250, 0.5)'
+                  : '1px solid transparent',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, rgba(96, 165, 250, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%)',
+                  color: 'white',
+                  transform: 'translateX(4px)',
+                  border: '1px solid rgba(96, 165, 250, 0.3)',
+                },
+                '& .MuiListItemIcon-root': {
+                  color: tab === item.id ? '#60a5fa' : 'rgba(255,255,255,0.7)',
+                  transition: 'all 0.3s ease',
+                },
+                '&:hover .MuiListItemIcon-root': {
+                  color: '#60a5fa',
+                }
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.label}
+                primaryTypographyProps={{
+                  fontSize: '0.9rem',
+                  fontWeight: tab === item.id ? 600 : 500,
+                  sx: {
+                    textShadow: tab === item.id ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                  }
+                }}
+              />
+            </ListItemButton>
+          ))}
+        </Box>
+
+        {/* User Profile Section */}
+        <Box sx={{ 
+          p: 2, 
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          position: 'relative',
+          zIndex: 1
+        }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            p: 2,
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: 2,
+            border: '1px solid rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+                mr: 2
+              }}
+            >
+              <Person sx={{ fontSize: 20, color: 'white' }} />
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {currentUser?.email}
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: '0.7rem'
+                }}
+              >
+                ผู้ดูแลระบบ
+              </Typography>
+            </Box>
+            <Tooltip title="ออกจากระบบ">
+              <IconButton
+                onClick={handleLogout}
+                size="small"
+                sx={{
+                  color: 'rgba(255,255,255,0.7)',
+                  '&:hover': {
+                    color: 'white',
+                    background: 'rgba(239, 68, 68, 0.2)',
+                  }
+                }}
+              >
+                <Logout sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
       </Box>
 
-    </>
-
-  );
+    {/* Main content */}
+    <Box sx={{ 
+      flex: 1, 
+      p: 0,
+      marginLeft: '280px', // เว้นที่ให้ sidebar
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative'
+    }}>
+      {renderContent()}
+    </Box>
+  </>  
+);
 };
 
 export default AdminDashboard;

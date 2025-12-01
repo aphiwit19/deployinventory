@@ -20,7 +20,21 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Paper,
+  Grid,
+  Avatar,
+  useTheme,
+  alpha,
 } from '@mui/material';
+import {
+  LocalShipping,
+  Person,
+  CalendarToday,
+  AttachMoney,
+  CheckCircle,
+  Pending,
+  Inventory,
+} from '@mui/icons-material';
 
 interface OrderItem {
   id: string;
@@ -75,112 +89,484 @@ const PickingTab: React.FC<PickingTabProps> = ({
   onCancelEdit,
   onMarkAsDelivered,
 }) => {
+  const theme = useTheme();
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'จัดส่งสำเร็จ':
+        return 'success';
+      case 'จัดส่งแล้ว':
+        return 'success';
+      case 'กำลังจัดส่ง':
+        return 'warning';
+      case 'แจ้งเบิก':
+        return 'info';
+      default:
+        return 'default';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'จัดส่งสำเร็จ':
+        return <CheckCircle sx={{ fontSize: 16 }} />;
+      case 'จัดส่งแล้ว':
+        return <LocalShipping sx={{ fontSize: 16 }} />;
+      case 'กำลังจัดส่ง':
+        return <LocalShipping sx={{ fontSize: 16 }} />;
+      case 'แจ้งเบิก':
+        return <Pending sx={{ fontSize: 16 }} />;
+      default:
+        return <Pending sx={{ fontSize: 16 }} />;
+    }
+  };
+
   return (
-    <>
-      <Typography variant="h4" gutterBottom>
-        การเบิกสินค้า
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-        รายการที่สตาฟแจ้งเบิกสินค้าแล้ว รอดำเนินการจัดส่ง
-      </Typography>
-      
-      {loadingPickingRecords ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-          <CircularProgress />
+    <Box sx={{ p: 3 }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Avatar
+            sx={{
+              width: 48,
+              height: 48,
+              background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+              mr: 2,
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            <LocalShipping sx={{ color: 'white', fontSize: 24 }} />
+          </Avatar>
+          <Box>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 0.5
+              }}
+            >
+              การเบิกสินค้า
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              รายการที่สตาฟแจ้งเบิกสินค้าแล้ว รอดำเนินการจัดส่ง
+            </Typography>
+          </Box>
         </Box>
+      </Box>
+      
+      {/* Loading State */}
+      {loadingPickingRecords ? (
+        <Paper
+          sx={{
+            p: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+            border: '1px solid #E2E8F0',
+            borderRadius: 3
+          }}
+        >
+          <CircularProgress
+            size={60}
+            thickness={4}
+            sx={{
+              color: '#3B82F6',
+              mb: 2
+            }}
+          />
+          <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
+            กำลังโหลดข้อมูล...
+          </Typography>
+        </Paper>
       ) : pickingRecords.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          ยังไม่มีรายการเบิกสินค้า
-        </Typography>
+        <Paper
+          sx={{
+            p: 8,
+            textAlign: 'center',
+            background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+            border: '1px solid #E2E8F0',
+            borderRadius: 3
+          }}
+        >
+          <Avatar
+            sx={{
+              width: 80,
+              height: 80,
+              bgcolor: '#E2E8F0',
+              mx: 'auto',
+              mb: 2
+            }}
+          >
+            <Inventory sx={{ fontSize: 40, color: '#64748B' }} />
+          </Avatar>
+          <Typography variant="h6" sx={{ color: '#475569', mb: 1 }}>
+            ยังไม่มีรายการเบิกสินค้า
+          </Typography>
+          <Typography variant="body2" color="#64748B">
+            ไม่พบรายการที่รอการจัดส่งในขณะนี้
+          </Typography>
+        </Paper>
       ) : (
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>ชื่อพนักงาน</TableCell>
-                <TableCell>ลูกค้า</TableCell>
-                <TableCell>ที่อยู่จัดส่ง</TableCell>
-                <TableCell>วันที่เบิก</TableCell>
-                <TableCell>ยอดรวม</TableCell>
-                <TableCell>ขนส่ง</TableCell>
-                <TableCell>เลขพัสดุ</TableCell>
-                <TableCell>สถานะ</TableCell>
-                <TableCell>จัดการ</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {pickingRecords.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell>{record.staffName}</TableCell>
-                  <TableCell>{record.customerInfo.fullName}</TableCell>
-                  <TableCell sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {record.customerInfo.address}
+        <Paper
+          sx={{
+            background: 'white',
+            border: '1px solid #E2E8F0',
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          <TableContainer sx={{ maxHeight: 600 }}>
+            <Table sx={{ minWidth: 800 }}>
+              <TableHead>
+                <TableRow
+                  sx={{
+                    background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)'
+                  }}
+                >
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Person sx={{ fontSize: 16, mr: 1 }} />
+                      พนักงาน
+                    </Box>
                   </TableCell>
-                  <TableCell>
-                    {record.pickedAt?.toDate?.().toLocaleDateString('th-TH') ||
-                      record.pickedAt?.toLocaleDateString?.('th-TH') ||
-                      '-'}
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    ลูกค้า
                   </TableCell>
-                  <TableCell>
-                    {record.total.toLocaleString('th-TH', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    ที่อยู่จัดส่ง
                   </TableCell>
-                  <TableCell>
-                    {record.shippingMethod || (
-                      <Typography variant="body2" color="text.secondary">
-                        ยังไม่ระบุ
-                      </Typography>
-                    )}
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <CalendarToday sx={{ fontSize: 16, mr: 1 }} />
+                      วันที่เบิก
+                    </Box>
                   </TableCell>
-                  <TableCell>
-                    {record.trackingNumber || (
-                      <Typography variant="body2" color="text.secondary">
-                        ยังไม่มี
-                      </Typography>
-                    )}
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <AttachMoney sx={{ fontSize: 16, mr: 1 }} />
+                      ยอดรวม
+                    </Box>
                   </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={record.status}
-                      color={
-                        record.status === 'จัดส่งสำเร็จ'
-                          ? 'success'
-                          : record.status === 'จัดส่งแล้ว'
-                          ? 'success'
-                          : record.status === 'กำลังจัดส่ง'
-                          ? 'warning'
-                          : 'default'
-                      }
-                      size="small"
-                    />
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    ขนส่ง
                   </TableCell>
-                  <TableCell>
-                    {record.status === 'จัดส่งแล้ว' ? (
-                      <Button variant="contained" color="success" size="small" onClick={() => onMarkAsDelivered(record)}>
-                        ยืนยันส่งสำเร็จ
-                      </Button>
-                    ) : record.status === 'จัดส่งสำเร็จ' ? (
-                      <Chip label="ส่งสำเร็จแล้ว" color="success" size="small" />
-                    ) : (
-                      <Button variant="outlined" size="small" onClick={() => onEditPicking(record)}>
-                        จัดการขนส่ง
-                      </Button>
-                    )}
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    เลขพัสดุ
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    สถานะ
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    จัดการ
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {pickingRecords.map((record, index) => (
+                  <TableRow
+                    key={record.id}
+                    sx={{
+                      '&:hover': {
+                        backgroundColor: alpha('#3B82F6', 0.04)
+                      },
+                      backgroundColor: index % 2 === 0 ? '#FAFAFA' : 'white'
+                    }}
+                  >
+                    <TableCell sx={{ py: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Avatar
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                            mr: 2,
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          {record.staffName?.charAt(0) || 'S'}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {record.staffName}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {record.customerInfo.fullName}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ py: 2, maxWidth: 200 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          fontSize: '0.813rem'
+                        }}
+                      >
+                        {record.customerInfo.address}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      <Typography variant="body2">
+                        {record.pickedAt?.toDate?.().toLocaleDateString('th-TH') ||
+                          record.pickedAt?.toLocaleDateString?.('th-TH') ||
+                          '-'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          color: '#059669'
+                        }}
+                      >
+                        ฿{record.total.toLocaleString('th-TH', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      {record.shippingMethod ? (
+                        <Chip
+                          label={record.shippingMethod}
+                          size="small"
+                          sx={{
+                            background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+                            color: '#1D4ED8',
+                            border: '1px solid #BFDBFE',
+                            fontWeight: 500
+                          }}
+                        />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.813rem' }}>
+                          ยังไม่ระบุ
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      {record.trackingNumber ? (
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: 'monospace',
+                            background: '#F3F4F6',
+                            px: 1,
+                            py: 0.5,
+                            borderRadius: 1,
+                            fontSize: '0.813rem'
+                          }}
+                        >
+                          {record.trackingNumber}
+                        </Typography>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.813rem' }}>
+                          ยังไม่มี
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      <Chip
+                        label={record.status}
+                        color={getStatusColor(record.status)}
+                        size="small"
+                        icon={getStatusIcon(record.status)}
+                        sx={{
+                          fontWeight: 500,
+                          '& .MuiChip-icon': {
+                            fontSize: 16
+                          }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ py: 2 }}>
+                      {record.status === 'จัดส่งแล้ว' ? (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          size="small"
+                          onClick={() => onMarkAsDelivered(record)}
+                          startIcon={<CheckCircle />}
+                          sx={{
+                            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                            boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)',
+                            '&:hover': {
+                              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+                            }
+                          }}
+                        >
+                          ยืนยันส่งสำเร็จ
+                        </Button>
+                      ) : record.status === 'จัดส่งสำเร็จ' ? (
+                        <Chip
+                          label="ส่งสำเร็จแล้ว"
+                          color="success"
+                          size="small"
+                          icon={<CheckCircle />}
+                          sx={{ fontWeight: 500 }}
+                        />
+                      ) : (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => onEditPicking(record)}
+                          startIcon={<LocalShipping />}
+                          sx={{
+                            borderColor: '#3B82F6',
+                            color: '#3B82F6',
+                            '&:hover': {
+                              borderColor: '#1D4ED8',
+                              background: alpha('#3B82F6', 0.04)
+                            }
+                          }}
+                        >
+                          จัดการขนส่ง
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
       )}
 
       {/* Edit Picking Dialog */}
-      <Dialog open={!!editingPicking} onClose={onCancelEdit} fullWidth maxWidth="sm">
-        <DialogTitle>จัดการขนส่ง</DialogTitle>
-        <DialogContent sx={{ pt: 2, display: 'grid', gap: 2 }}>
-          <FormControl fullWidth>
+      <Dialog
+        open={!!editingPicking}
+        onClose={onCancelEdit}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: 'white',
+            border: '1px solid #E2E8F0'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+            borderBottom: '1px solid #E2E8F0',
+            py: 3,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <Avatar
+            sx={{
+              width: 40,
+              height: 40,
+              background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+              mr: 2
+            }}
+          >
+            <LocalShipping sx={{ color: 'white', fontSize: 20 }} />
+          </Avatar>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E293B' }}>
+              จัดการขนส่ง
+            </Typography>
+            <Typography variant="body2" color="#64748B">
+              กรอกข้อมูลการจัดส่งสินค้า
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3, display: 'grid', gap: 3 }}>
+          <FormControl
+            fullWidth
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2
+              }
+            }}
+          >
             <InputLabel>ขนส่ง</InputLabel>
             <Select
               value={pickingForm.shippingMethod}
@@ -199,16 +585,43 @@ const PickingTab: React.FC<PickingTabProps> = ({
             value={pickingForm.trackingNumber}
             onChange={(e) => onPickingFormChange('trackingNumber', e.target.value)}
             placeholder="กรอกเลขพัสดุ"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2
+              }
+            }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onCancelEdit}>ยกเลิก</Button>
-          <Button onClick={onSavePicking} variant="contained">
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #E2E8F0' }}>
+          <Button
+            onClick={onCancelEdit}
+            sx={{
+              borderColor: '#D1D5DB',
+              color: '#6B7280',
+              '&:hover': {
+                borderColor: '#9CA3AF',
+                background: '#F9FAFB'
+              }
+            }}
+          >
+            ยกเลิก
+          </Button>
+          <Button
+            onClick={onSavePicking}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+              boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%)'
+              }
+            }}
+          >
             บันทึก
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Box>
   );
 };
 

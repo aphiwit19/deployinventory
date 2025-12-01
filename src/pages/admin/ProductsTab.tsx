@@ -16,11 +16,28 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Avatar,
+  useTheme,
+  alpha,
+  Grid,
+  Paper,
+  Chip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import {
+  Inventory,
+  Search,
+  Add,
+  Edit,
+  Delete,
+  Image,
+  AttachMoney,
+  Clear,
+  FilterAlt,
+} from '@mui/icons-material';
 import { add, update, remove } from '../../services/firestore';
 
 interface ProductRow {
@@ -103,82 +120,185 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
     ? products.filter(p => p.id === filteredProductId)
     : products;
   return (
-    <>
-      <Typography variant="h4" gutterBottom>
-        จัดการสินค้า
-      </Typography>
+    <Box sx={{ p: 3 }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Avatar
+            sx={{
+              width: 48,
+              height: 48,
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              mr: 2,
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+            }}
+          >
+            <Inventory sx={{ color: 'white', fontSize: 24 }} />
+          </Avatar>
+          <Box>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #047857 0%, #10B981 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 0.5
+              }}
+            >
+              จัดการสินค้า
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              เพิ่ม แก้ไข และจัดการสินค้าในระบบ
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
 
-      {/* แสดงข้อความเมื่อกรองสินค้าเดี่ยว */}
+      {/* Filter Info */}
       {filteredProductId && (
-        <Box sx={{ mb: 2, p: 2, bgcolor: '#f0f7ff', borderRadius: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2" color="primary">
+        <Paper
+          sx={{
+            p: 2,
+            mb: 3,
+            background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+            border: '1px solid #BFDBFE',
+            borderRadius: 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2
+          }}
+        >
+          <Avatar sx={{ bgcolor: '#3B82F6' }}>
+            <FilterAlt sx={{ fontSize: 16 }} />
+          </Avatar>
+          <Typography variant="body2" color="#1E40AF" sx={{ fontWeight: 500 }}>
             กำลังแสดงสินค้าเดียว: {displayedProducts[0]?.name || 'ไม่พบสินค้า'}
           </Typography>
           {onClearFilter && (
-            <Button size="small" onClick={onClearFilter}>
+            <Button
+              size="small"
+              onClick={onClearFilter}
+              sx={{
+                borderColor: '#3B82F6',
+                color: '#3B82F6',
+                '&:hover': {
+                  borderColor: '#1D4ED8',
+                  background: alpha('#3B82F6', 0.04)
+                }
+              }}
+            >
               แสดงทั้งหมด
             </Button>
           )}
-        </Box>
+        </Paper>
       )}
       
-      {/* Create Product Form */}
-      <Box sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          เพิ่มสินค้าใหม่
-        </Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 2 }}>
-          <TextField
-            label="ชื่อสินค้า"
-            value={newProduct.name}
-            onChange={(e) => onNewProductChange('name', e.target.value)}
-            required
-          />
-          <TextField
-            label="ราคา"
-            type="number"
-            value={newProduct.price}
-            onChange={(e) => onNewProductChange('price', e.target.value)}
-            inputProps={{ min: 0, step: 0.01 }}
-          />
-          <TextField
-            label="จำนวน"
-            type="number"
-            value={newProduct.quantity}
-            onChange={(e) => onNewProductChange('quantity', e.target.value)}
-            inputProps={{ min: 0, step: 1 }}
-          />
-          <Box>
-            <input
-              type="file"
-              accept="image/*"
-              id="product-image-upload"
-              style={{ display: 'none' }}
-              onChange={(e) => onNewProductImageChange(e.target.files?.[0] || null)}
-            />
-            <label htmlFor="product-image-upload">
-              <Button
-                variant="outlined"
-                component="span"
-                startIcon={<CloudUploadIcon />}
-                disabled={uploadingImage}
-                fullWidth
-                sx={{ height: '56px' }}
-              >
-                {uploadingImage ? 'กำลังอัปโหลด...' : (newProduct.imageFile ? newProduct.imageFile.name : 'อัปโหลดรูปภาพ')}
-              </Button>
-            </label>
-            {newProduct.imageFile && (
-              <Button
-                size="small"
-                onClick={() => onNewProductImageChange(null)}
-                sx={{ mt: 1, width: '100%' }}
-              >
-                ลบรูป
-              </Button>
-            )}
-          </Box>
+      {/* Create Product Section */}
+      <Paper
+        sx={{
+          p: 3,
+          mb: 4,
+          background: 'white',
+          border: '1px solid #E2E8F0',
+          borderRadius: 3,
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Avatar
+            sx={{
+              width: 32,
+              height: 32,
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              mr: 2
+            }}
+          >
+            <Add sx={{ color: 'white', fontSize: 16 }} />
+          </Avatar>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E293B' }}>
+            เพิ่มสินค้าใหม่
+          </Typography>
         </Box>
+        
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField
+              fullWidth
+              label="ชื่อสินค้า"
+              value={newProduct.name}
+              onChange={(e) => onNewProductChange('name', e.target.value)}
+              required
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField
+              fullWidth
+              label="ราคา"
+              type="number"
+              value={newProduct.price}
+              onChange={(e) => onNewProductChange('price', e.target.value)}
+              inputProps={{ min: 0, step: 0.01 }}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField
+              fullWidth
+              label="จำนวน"
+              type="number"
+              value={newProduct.quantity}
+              onChange={(e) => onNewProductChange('quantity', e.target.value)}
+              inputProps={{ min: 0, step: 1 }}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Box>
+              <input
+                type="file"
+                accept="image/*"
+                id="product-image-upload"
+                style={{ display: 'none' }}
+                onChange={(e) => onNewProductImageChange(e.target.files?.[0] || null)}
+              />
+              <label htmlFor="product-image-upload">
+                <Button
+                  variant="outlined"
+                  component="span"
+                  startIcon={<CloudUploadIcon />}
+                  disabled={uploadingImage}
+                  fullWidth
+                  sx={{
+                    height: '56px',
+                    borderColor: '#10B981',
+                    color: '#10B981',
+                    '&:hover': {
+                      borderColor: '#059669',
+                      background: alpha('#10B981', 0.04)
+                    },
+                    '& .MuiOutlinedInput-root': { borderRadius: 2 }
+                  }}
+                >
+                  {uploadingImage ? 'กำลังอัปโหลด...' : (newProduct.imageFile ? newProduct.imageFile.name : 'อัปโหลดรูปภาพ')}
+                </Button>
+              </label>
+              {newProduct.imageFile && (
+                <Button
+                  size="small"
+                  onClick={() => onNewProductImageChange(null)}
+                  sx={{ mt: 1, width: '100%', color: '#EF4444' }}
+                  startIcon={<Clear />}
+                >
+                  ลบรูป
+                </Button>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
+        
         <TextField
           label="คำอธิบายสินค้า"
           value={newProduct.description}
@@ -186,96 +306,362 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
           multiline
           minRows={2}
           fullWidth
-          sx={{ mb: 2 }}
+          sx={{ mt: 3, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
         />
+        
         <Button
           variant="contained"
           onClick={onCreateProduct}
           disabled={creatingProduct || uploadingImage || !newProduct.name.trim()}
           startIcon={creatingProduct ? <CircularProgress size={20} /> : <AddIcon />}
+          sx={{
+            mt: 3,
+            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+            boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+            }
+          }}
         >
           {creatingProduct ? 'กำลังเพิ่ม...' : 'เพิ่มสินค้า'}
         </Button>
-      </Box>
+      </Paper>
 
       {/* Products Table */}
       {loadingProducts ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-        </Box>
+        <Paper
+          sx={{
+            p: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+            border: '1px solid #E2E8F0',
+            borderRadius: 3,
+            minHeight: 400
+          }}
+        >
+          <CircularProgress
+            size={60}
+            thickness={4}
+            sx={{
+              color: '#10B981',
+              mb: 2
+            }}
+          />
+          <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
+            กำลังโหลดข้อมูล...
+          </Typography>
+        </Paper>
       ) : (
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>ชื่อสินค้า</TableCell>
-                <TableCell>คำอธิบาย</TableCell>
-                <TableCell align="right">ราคา</TableCell>
-                <TableCell align="right">จำนวน</TableCell>
-                <TableCell>รูปภาพ</TableCell>
-                <TableCell align="right">จัดการ</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {displayedProducts.map((product) => (
-                <TableRow key={product.id} hover>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.description}</TableCell>
-                  <TableCell align="right">{product.price.toFixed(2)}</TableCell>
-                  <TableCell align="right">{product.quantity}</TableCell>
-                  <TableCell>
-                    {product.imageUrl ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box
-                          component="img"
-                          src={product.imageUrl}
-                          alt={product.name}
-                          sx={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 1, border: '1px solid #e0e0e0' }}
-                        />
-                      </Box>
-                    ) : (
-                      '-'
-                    )}
+        <Paper
+          sx={{
+            background: 'white',
+            border: '1px solid #E2E8F0',
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          <TableContainer sx={{ maxHeight: 600 }}>
+            <Table sx={{ minWidth: 800 }}>
+              <TableHead>
+                <TableRow
+                  sx={{
+                    background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)'
+                  }}
+                >
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    ชื่อสินค้า
                   </TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => onIncrementQuantity(product)}
-                    >
-                      <AddIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="inherit"
-                      onClick={() => onStartEditProduct(product)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => onDeleteProduct(product)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    คำอธิบาย
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <AttachMoney sx={{ fontSize: 16, mr: 1 }} />
+                      ราคา
+                    </Box>
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    จำนวน
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Image sx={{ fontSize: 16, mr: 1 }} />
+                      รูปภาพ
+                    </Box>
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: '#374151',
+                      fontSize: '0.875rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    จัดการ
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {displayedProducts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                      <Avatar
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          bgcolor: '#E2E8F0',
+                          mx: 'auto',
+                          mb: 2
+                        }}
+                      >
+                        <Inventory sx={{ fontSize: 40, color: '#64748B' }} />
+                      </Avatar>
+                      <Typography variant="h6" sx={{ color: '#475569', mb: 1 }}>
+                        ไม่พบสินค้า
+                      </Typography>
+                      <Typography variant="body2" color="#64748B">
+                        ยังไม่มีสินค้าในระบบ หรือไม่พบข้อมูลที่ค้นหา
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  displayedProducts.map((product, index) => (
+                    <TableRow
+                      key={product.id}
+                      sx={{
+                        '&:hover': {
+                          backgroundColor: alpha('#10B981', 0.04)
+                        },
+                        backgroundColor: index % 2 === 0 ? '#FAFAFA' : 'white'
+                      }}
+                    >
+                      <TableCell sx={{ py: 2 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {product.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ py: 2, maxWidth: 200 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            fontSize: '0.813rem'
+                          }}
+                        >
+                          {product.description || '-'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ py: 2 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            color: '#059669'
+                          }}
+                        >
+                          ฿{product.price.toFixed(2)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ py: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              background: product.quantity > 0
+                                ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                                : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                              mr: 1
+                            }}
+                          >
+                            <Inventory sx={{ color: 'white', fontSize: 14 }} />
+                          </Avatar>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 600,
+                              color: product.quantity > 0 ? '#059669' : '#DC2626'
+                            }}
+                          >
+                            {product.quantity} ชิ้น
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ py: 2 }}>
+                        {product.imageUrl ? (
+                          <Box
+                            component="img"
+                            src={product.imageUrl}
+                            alt={product.name}
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              objectFit: 'cover',
+                              borderRadius: 2,
+                              border: '1px solid #E2E8F0'
+                            }}
+                          />
+                        ) : (
+                          <Avatar
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              bgcolor: '#F3F4F6',
+                              color: '#6B7280'
+                            }}
+                          >
+                            <Image />
+                          </Avatar>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ py: 2 }}>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => onIncrementQuantity(product)}
+                            sx={{
+                              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                              color: 'white',
+                              '&:hover': {
+                                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+                              }
+                            }}
+                          >
+                            <AddIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => onStartEditProduct(product)}
+                            sx={{
+                              background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                              color: 'white',
+                              '&:hover': {
+                                background: 'linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%)'
+                              }
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => onDeleteProduct(product)}
+                            sx={{
+                              background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                              color: 'white',
+                              '&:hover': {
+                                background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)'
+                              }
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
       )}
 
       {/* Edit Product Dialog */}
-      <Dialog open={!!editingProduct} onClose={onCancelEdit} fullWidth maxWidth="sm">
-        <DialogTitle>แก้ไขสินค้า</DialogTitle>
-        <DialogContent sx={{ pt: 2, display: 'grid', gap: 2 }}>
+      <Dialog
+        open={!!editingProduct}
+        onClose={onCancelEdit}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: 'white',
+            border: '1px solid #E2E8F0'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+            borderBottom: '1px solid #E2E8F0',
+            py: 3,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <Avatar
+            sx={{
+              width: 40,
+              height: 40,
+              background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+              mr: 2
+            }}
+          >
+            <Edit sx={{ color: 'white', fontSize: 20 }} />
+          </Avatar>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E293B' }}>
+              แก้ไขสินค้า
+            </Typography>
+            <Typography variant="body2" color="#64748B">
+              แก้ไขข้อมูลสินค้าในระบบ
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3, display: 'grid', gap: 3 }}>
           <TextField
             label="ชื่อสินค้า"
             value={editForm.name}
             onChange={(e) => onEditFormChange('name', e.target.value)}
             required
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
           <TextField
             label="คำอธิบายสินค้า"
@@ -283,6 +669,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
             onChange={(e) => onEditFormChange('description', e.target.value)}
             multiline
             minRows={2}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
           <TextField
             label="ราคา"
@@ -290,6 +677,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
             value={editForm.price}
             onChange={(e) => onEditFormChange('price', e.target.value)}
             inputProps={{ min: 0, step: 0.01 }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
           <TextField
             label="จำนวน"
@@ -297,6 +685,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
             value={editForm.quantity}
             onChange={(e) => onEditFormChange('quantity', e.target.value)}
             inputProps={{ min: 0, step: 1 }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
           <Box>
             <input
@@ -313,7 +702,16 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
                 startIcon={<CloudUploadIcon />}
                 disabled={uploadingImage}
                 fullWidth
-                sx={{ height: '56px' }}
+                sx={{
+                  height: '56px',
+                  borderColor: '#3B82F6',
+                  color: '#3B82F6',
+                  '&:hover': {
+                    borderColor: '#1D4ED8',
+                    background: alpha('#3B82F6', 0.04)
+                  },
+                  '& .MuiOutlinedInput-root': { borderRadius: 2 }
+                }}
               >
                 {uploadingImage ? 'กำลังอัปโหลด...' : (editForm.imageFile ? editForm.imageFile.name : 'อัปโหลดรูปภาพใหม่')}
               </Button>
@@ -322,30 +720,87 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
               <Button
                 size="small"
                 onClick={() => onEditImageChange(null)}
-                sx={{ mt: 1, width: '100%' }}
+                sx={{ mt: 1, width: '100%', color: '#EF4444' }}
+                startIcon={<Clear />}
               >
                 ลบรูป
               </Button>
             )}
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onCancelEdit}>ยกเลิก</Button>
-          <Button onClick={onSaveEditProduct} variant="contained">
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #E2E8F0' }}>
+          <Button
+            onClick={onCancelEdit}
+            sx={{
+              borderColor: '#D1D5DB',
+              color: '#6B7280',
+              '&:hover': {
+                borderColor: '#9CA3AF',
+                background: '#F9FAFB'
+              }
+            }}
+          >
+            ยกเลิก
+          </Button>
+          <Button
+            onClick={onSaveEditProduct}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+              boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%)'
+              }
+            }}
+          >
             บันทึก
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Increment Quantity Dialog */}
-      <Dialog 
-        open={!!incrementForm.productId} 
+      <Dialog
+        open={!!incrementForm.productId}
         onClose={() => onIncrementFormChange('1')}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: 'white',
+            border: '1px solid #E2E8F0'
+          }
+        }}
       >
-        <DialogTitle>เพิ่มจำนวนสินค้า</DialogTitle>
-        <DialogContent>
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+            borderBottom: '1px solid #E2E8F0',
+            py: 3,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <Avatar
+            sx={{
+              width: 40,
+              height: 40,
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              mr: 2
+            }}
+          >
+            <Add sx={{ color: 'white', fontSize: 20 }} />
+          </Avatar>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E293B' }}>
+              เพิ่มจำนวนสินค้า
+            </Typography>
+            <Typography variant="body2" color="#64748B">
+              ปรับจำนวนสต็อกของสินค้า
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
           <TextField
             label="จำนวนที่ต้องการเพิ่ม"
             type="number"
@@ -353,17 +808,39 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
             onChange={(e) => onIncrementFormChange(e.target.value)}
             fullWidth
             inputProps={{ min: 1, step: 1 }}
-            sx={{ mt: 1 }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => onIncrementFormChange('1')}>ยกเลิก</Button>
-          <Button onClick={onSaveIncrement} variant="contained">
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #E2E8F0' }}>
+          <Button
+            onClick={() => onIncrementFormChange('1')}
+            sx={{
+              borderColor: '#D1D5DB',
+              color: '#6B7280',
+              '&:hover': {
+                borderColor: '#9CA3AF',
+                background: '#F9FAFB'
+              }
+            }}
+          >
+            ยกเลิก
+          </Button>
+          <Button
+            onClick={onSaveIncrement}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+              }
+            }}
+          >
             เพิ่มสต็อก
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Box>
   );
 };
 
