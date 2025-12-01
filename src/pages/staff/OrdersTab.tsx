@@ -54,11 +54,13 @@ const OrdersTab = () => {
       try {
         // โหลดทุกออเดอร์จาก Firestore
         const allOrders = await getAll('orders');
-        // แสดงเฉพาะที่ยังไม่ได้เบิก
-        const pendingOrders = (allOrders as Order[]).filter(
-          (o) => o.status === 'รอดำเนินการ'
+        
+        // แสดงเฉพาะออเดอร์ที่ยังไม่มีคนรับผิดชอบ
+        const unassignedOrders = (allOrders as Order[]).filter(
+          (o) => !o.assignedTo && o.status === 'รอดำเนินการ'
         );
-        setOrders(pendingOrders);
+        
+        setOrders(unassignedOrders);
       } catch (e) {
         console.error('Failed to load orders for staff', e);
       } finally {
@@ -85,69 +87,164 @@ const OrdersTab = () => {
   }
 
   return (
-    <>
-      <Typography variant="h4" gutterBottom>
-        จัดการคำสั่งซื้อ
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-        รายการคำสั่งซื้อที่รอการเบิกสินค้า
-      </Typography>
-      {orders.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          ไม่มีคำสั่งซื้อที่ต้องดำเนินการในขณะนี้
+    <Box sx={{ 
+      p: { xs: 2, sm: 3 }, 
+      minHeight: 'calc(100vh - 64px)', // เต็มหน้าจอลบ header
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <Box sx={{ mb: 2, flexShrink: 0 }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 0.5 }}>
+          จัดการคำสั่งซื้อ
         </Typography>
+        <Typography variant="body1" color="text.secondary">
+          ออเดอร์ของคุณและออเดอร์ที่รอการรับผิดชอบ
+        </Typography>
+      </Box>
+      
+      {orders.length === 0 ? (
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            flex: 1,
+            textAlign: 'center'
+          }}
+        >
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+            ไม่มีคำสั่งซื้อที่ต้องดำเนินการ
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            ไม่มีออเดอร์ใหม่ในขณะนี้
+          </Typography>
+        </Box>
       ) : (
-        <TableContainer>
-          <Table>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <TableContainer 
+            sx={{ 
+              height: 'auto', // ให้ความสูงปรับตามเนื้อหา
+              maxHeight: 'calc(100vh - 200px)', // สูงสูงสุดถ้าข้อมูลเยอะ
+              border: '1px solid #e0e0e0',
+              borderRadius: 1,
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: '#f1f1f1',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: '#888',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb:hover': {
+                backgroundColor: '#555',
+              },
+            }}
+          >
+          <Table 
+            stickyHeader
+            sx={{
+              borderCollapse: 'separate',
+              borderSpacing: 0,
+              height: 'auto', // ให้ความสูงปรับตามเนื้อหา
+              '& .MuiTableCell-root': {
+                borderBottom: 'none', // ไม่มีเส้นโดยค่าเริ่มต้น
+              },
+            }}
+          >
             <TableHead>
               <TableRow>
-                <TableCell>เลขที่ออเดอร์</TableCell>
-                <TableCell>ลูกค้า</TableCell>
-                <TableCell>ที่อยู่</TableCell>
-                <TableCell>รายการสินค้า</TableCell>
-                <TableCell>ยอดรวม</TableCell>
-                <TableCell>จัดการ</TableCell>
+                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5', borderBottom: '2px solid #e0e0e0' }}>เลขที่ออเดอร์</TableCell>
+                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5', borderBottom: '2px solid #e0e0e0' }}>ลูกค้า</TableCell>
+                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5', borderBottom: '2px solid #e0e0e0' }}>ที่อยู่</TableCell>
+                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5', borderBottom: '2px solid #e0e0e0' }}>รายการสินค้า</TableCell>
+                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5', borderBottom: '2px solid #e0e0e0' }}>ยอดรวม</TableCell>
+                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5', borderBottom: '2px solid #e0e0e0' }}>วันที่</TableCell>
+                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5', borderBottom: '2px solid #e0e0e0' }}>จัดการ</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell>{order.id}</TableCell>
-                  <TableCell>{order.fullName}</TableCell>
-                  <TableCell sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {order.address}
-                  </TableCell>
-                  <TableCell>
-                    <Box>
-                      {order.items.map((item, index) => (
-                        <Typography key={item.id || index} variant="body2" sx={{ fontSize: '0.875rem' }}>
-                          {item.name} x{item.quantity}
+              {orders.map((order) => {
+                return (
+                  <TableRow 
+                    key={order.id}
+                    sx={{
+                      backgroundColor: 'inherit',
+                      '&:hover': {
+                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                      },
+                    }}
+                  >
+                    <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          #{order.id.slice(-6)}
                         </Typography>
-                      ))}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    {order.total.toLocaleString('th-TH', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="contained" 
-                      size="small" 
-                      onClick={() => handleAssignOrder(order.id)}
-                    >
-                      รับออเดอร์
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        <span style={{ color: '#10B981', fontSize: '0.75rem' }}>🆕</span>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {order.fullName}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', borderBottom: '1px solid #e0e0e0' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {order.address}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                      <Box sx={{ maxHeight: 100, overflowY: 'auto' }}>
+                        {order.items.map((item, index) => (
+                          <Typography key={item.id || index} variant="body2" sx={{ fontSize: '0.875rem', py: 0.25 }}>
+                            • {item.name} x{item.quantity}
+                          </Typography>
+                        ))}
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: '#1E3A8A' }}>
+                        ฿{order.total.toLocaleString()}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {order.createdAt?.toDate?.().toLocaleDateString('th-TH') ||
+                          order.createdAt?.toLocaleDateString?.('th-TH') ||
+                          new Date().toLocaleDateString('th-TH')}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                      <Button 
+                        variant="contained" 
+                        size="small" 
+                        onClick={() => handleAssignOrder(order.id)}
+                        sx={{
+                          backgroundColor: '#10B981',
+                          color: 'white',
+                          fontWeight: 600,
+                          '&:hover': {
+                            backgroundColor: '#059669',
+                            transform: 'translateY(-1px)',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                          },
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        รับออเดอร์
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
-          </Table>
-        </TableContainer>
+            </Table>
+          </TableContainer>
+        </Box>
       )}
-    </>
+    </Box>
   );
 };
 

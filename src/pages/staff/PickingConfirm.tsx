@@ -90,7 +90,7 @@ const PickingConfirm = () => {
 
       // มอบหมายและบันทึกประวัติการเบิกสินค้าในครั้งเดียว
       await update('orders', order.id, {
-        status: 'กำลังเตรียมสินค้า',
+        status: 'กำลังเตรียมสินค้า', // เปลี่ยนกลับเป็น 'กำลังเตรียมสินค้า'
         assignedTo: currentUser.uid,
         assignedAt: new Date()
       });
