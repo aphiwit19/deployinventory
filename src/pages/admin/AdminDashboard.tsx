@@ -13,6 +13,7 @@ import {
   Button,
 } from '@mui/material';
 import { getAll, update, add, remove, getById } from '../../services/firestore';
+import { uploadImage, generateImagePath } from '../../services/storage';
 import { useNavigate } from 'react-router-dom';
 import OverviewTab from './OverviewTab';
 import ProductsTab from './ProductsTab';
@@ -96,6 +97,7 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [creatingProduct, setCreatingProduct] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductRow | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -112,6 +114,7 @@ const AdminDashboard = () => {
     price: '',
     quantity: '',
     imageUrl: '',
+    imageFile: null as File | null,
   });
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -119,6 +122,7 @@ const AdminDashboard = () => {
     price: '',
     quantity: '',
     imageUrl: '',
+    imageFile: null as File | null,
   });
   const [incrementForm, setIncrementForm] = useState({
     productId: '',
@@ -224,22 +228,36 @@ const AdminDashboard = () => {
     setNewProduct((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleNewProductImageChange = (file: File | null) => {
+    setNewProduct((prev) => ({ ...prev, imageFile: file }));
+  };
+
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProduct.name.trim()) return;
 
     const price = Number(newProduct.price) || 0;
     const quantity = Number(newProduct.quantity) || 0;
+    let imageUrl = newProduct.imageUrl.trim();
 
     try {
       setCreatingProduct(true);
+      
+      // Upload image if exists
+      if (newProduct.imageFile) {
+        setUploadingImage(true);
+        const imagePath = generateImagePath(newProduct.imageFile.name);
+        imageUrl = await uploadImage(newProduct.imageFile, imagePath);
+        setUploadingImage(false);
+      }
+
       // create new product
       const created: any = await add('products', {
         name: newProduct.name.trim(),
         description: newProduct.description.trim(),
         price,
         quantity,
-        imageUrl: newProduct.imageUrl.trim(),
+        imageUrl,
         createdAt: new Date().toISOString(),
       });
 
@@ -272,11 +290,12 @@ const AdminDashboard = () => {
       }
 
       // reset create form state
-      setNewProduct({ name: '', description: '', price: '', quantity: '', imageUrl: '' });
+      setNewProduct({ name: '', description: '', price: '', quantity: '', imageUrl: '', imageFile: null });
     } catch (e) {
       console.error('Failed to create product', e);
     } finally {
       setCreatingProduct(false);
+      setUploadingImage(false);
     }
   };
 
@@ -352,6 +371,7 @@ const AdminDashboard = () => {
       price: String(product.price),
       quantity: String(product.quantity),
       imageUrl: product.imageUrl || '',
+      imageFile: null,
     });
   };
 
@@ -362,6 +382,10 @@ const AdminDashboard = () => {
     setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleEditImageChange = (file: File | null) => {
+    setEditForm((prev) => ({ ...prev, imageFile: file }));
+  };
+
   const handleSaveEditProduct = async () => {
     if (!editingProduct) return;
 
@@ -369,14 +393,23 @@ const AdminDashboard = () => {
     const quantity = Number(editForm.quantity) || 0;
     const currentQuantity = editingProduct.quantity || 0;
     const quantityDiff = quantity - currentQuantity; // คำนวณความต่าง
+    let imageUrl = editForm.imageUrl.trim();
 
     try {
+      // Upload new image if exists
+      if (editForm.imageFile) {
+        setUploadingImage(true);
+        const imagePath = generateImagePath(editForm.imageFile.name);
+        imageUrl = await uploadImage(editForm.imageFile, imagePath);
+        setUploadingImage(false);
+      }
+
       await update('products', editingProduct.id, {
         name: editForm.name.trim(),
         description: editForm.description.trim(),
         price,
         quantity,
-        imageUrl: editForm.imageUrl.trim(),
+        imageUrl,
       });
 
       setProducts((prev) =>
@@ -388,7 +421,7 @@ const AdminDashboard = () => {
                 description: editForm.description.trim(),
                 price,
                 quantity,
-                imageUrl: editForm.imageUrl.trim(),
+                imageUrl,
               }
             : p,
         ),
@@ -413,6 +446,8 @@ const AdminDashboard = () => {
       setEditingProduct(null);
     } catch (e) {
       console.error('Failed to update product', e);
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -622,6 +657,7 @@ const AdminDashboard = () => {
             products={products}
             loadingProducts={loadingProducts}
             creatingProduct={creatingProduct}
+            uploadingImage={uploadingImage}
             editingProduct={editingProduct}
             newProduct={newProduct}
             editForm={editForm}
@@ -629,6 +665,7 @@ const AdminDashboard = () => {
             filteredProductId={filteredProductId}
             onClearFilter={() => setFilteredProductId(null)}
             onNewProductChange={handleNewProductChange}
+            onNewProductImageChange={handleNewProductImageChange}
             onCreateProduct={handleCreateProduct}
             onIncrementQuantity={handleIncrementQuantity}
             onIncrementFormChange={handleIncrementFormChange}
@@ -636,6 +673,7 @@ const AdminDashboard = () => {
             onDeleteProduct={handleDeleteProduct}
             onStartEditProduct={startEditProduct}
             onEditFormChange={handleEditFormChange}
+            onEditImageChange={handleEditImageChange}
             onSaveEditProduct={handleSaveEditProduct}
             onCancelEdit={() => setEditingProduct(null)}
           />

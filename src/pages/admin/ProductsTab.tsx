@@ -20,6 +20,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { add, update, remove } from '../../services/firestore';
 
 interface ProductRow {
@@ -35,6 +36,7 @@ interface ProductsTabProps {
   products: ProductRow[];
   loadingProducts: boolean;
   creatingProduct: boolean;
+  uploadingImage: boolean;
   editingProduct: ProductRow | null;
   newProduct: {
     name: string;
@@ -42,6 +44,7 @@ interface ProductsTabProps {
     price: string;
     quantity: string;
     imageUrl: string;
+    imageFile: File | null;
   };
   editForm: {
     name: string;
@@ -49,6 +52,7 @@ interface ProductsTabProps {
     price: string;
     quantity: string;
     imageUrl: string;
+    imageFile: File | null;
   };
   incrementForm: {
     productId: string;
@@ -57,6 +61,7 @@ interface ProductsTabProps {
   filteredProductId?: string | null;
   onClearFilter?: () => void;
   onNewProductChange: (field: 'name' | 'description' | 'price' | 'quantity' | 'imageUrl', value: string) => void;
+  onNewProductImageChange: (file: File | null) => void;
   onCreateProduct: (e: React.FormEvent) => void;
   onIncrementQuantity: (product: ProductRow) => void;
   onIncrementFormChange: (value: string) => void;
@@ -64,6 +69,7 @@ interface ProductsTabProps {
   onDeleteProduct: (product: ProductRow) => void;
   onStartEditProduct: (product: ProductRow) => void;
   onEditFormChange: (field: 'name' | 'description' | 'price' | 'quantity' | 'imageUrl', value: string) => void;
+  onEditImageChange: (file: File | null) => void;
   onSaveEditProduct: () => void;
   onCancelEdit: () => void;
 }
@@ -72,6 +78,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
   products,
   loadingProducts,
   creatingProduct,
+  uploadingImage,
   editingProduct,
   newProduct,
   editForm,
@@ -79,6 +86,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
   filteredProductId,
   onClearFilter,
   onNewProductChange,
+  onNewProductImageChange,
   onCreateProduct,
   onIncrementQuantity,
   onIncrementFormChange,
@@ -86,6 +94,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
   onDeleteProduct,
   onStartEditProduct,
   onEditFormChange,
+  onEditImageChange,
   onSaveEditProduct,
   onCancelEdit,
 }) => {
@@ -139,11 +148,36 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
             onChange={(e) => onNewProductChange('quantity', e.target.value)}
             inputProps={{ min: 0, step: 1 }}
           />
-          <TextField
-            label="ลิ้งค์รูปภาพ (URL)"
-            value={newProduct.imageUrl}
-            onChange={(e) => onNewProductChange('imageUrl', e.target.value)}
-          />
+          <Box>
+            <input
+              type="file"
+              accept="image/*"
+              id="product-image-upload"
+              style={{ display: 'none' }}
+              onChange={(e) => onNewProductImageChange(e.target.files?.[0] || null)}
+            />
+            <label htmlFor="product-image-upload">
+              <Button
+                variant="outlined"
+                component="span"
+                startIcon={<CloudUploadIcon />}
+                disabled={uploadingImage}
+                fullWidth
+                sx={{ height: '56px' }}
+              >
+                {uploadingImage ? 'กำลังอัปโหลด...' : (newProduct.imageFile ? newProduct.imageFile.name : 'อัปโหลดรูปภาพ')}
+              </Button>
+            </label>
+            {newProduct.imageFile && (
+              <Button
+                size="small"
+                onClick={() => onNewProductImageChange(null)}
+                sx={{ mt: 1, width: '100%' }}
+              >
+                ลบรูป
+              </Button>
+            )}
+          </Box>
         </Box>
         <TextField
           label="คำอธิบายสินค้า"
@@ -157,7 +191,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
         <Button
           variant="contained"
           onClick={onCreateProduct}
-          disabled={creatingProduct || !newProduct.name.trim()}
+          disabled={creatingProduct || uploadingImage || !newProduct.name.trim()}
           startIcon={creatingProduct ? <CircularProgress size={20} /> : <AddIcon />}
         >
           {creatingProduct ? 'กำลังเพิ่ม...' : 'เพิ่มสินค้า'}
@@ -264,11 +298,36 @@ const ProductsTab: React.FC<ProductsTabProps> = ({
             onChange={(e) => onEditFormChange('quantity', e.target.value)}
             inputProps={{ min: 0, step: 1 }}
           />
-          <TextField
-            label="ลิ้งค์รูปภาพ (URL)"
-            value={editForm.imageUrl}
-            onChange={(e) => onEditFormChange('imageUrl', e.target.value)}
-          />
+          <Box>
+            <input
+              type="file"
+              accept="image/*"
+              id="edit-image-upload"
+              style={{ display: 'none' }}
+              onChange={(e) => onEditImageChange(e.target.files?.[0] || null)}
+            />
+            <label htmlFor="edit-image-upload">
+              <Button
+                variant="outlined"
+                component="span"
+                startIcon={<CloudUploadIcon />}
+                disabled={uploadingImage}
+                fullWidth
+                sx={{ height: '56px' }}
+              >
+                {uploadingImage ? 'กำลังอัปโหลด...' : (editForm.imageFile ? editForm.imageFile.name : 'อัปโหลดรูปภาพใหม่')}
+              </Button>
+            </label>
+            {editForm.imageFile && (
+              <Button
+                size="small"
+                onClick={() => onEditImageChange(null)}
+                sx={{ mt: 1, width: '100%' }}
+              >
+                ลบรูป
+              </Button>
+            )}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={onCancelEdit}>ยกเลิก</Button>
