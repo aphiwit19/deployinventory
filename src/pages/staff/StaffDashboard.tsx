@@ -79,31 +79,44 @@ const StaffDashboard = () => {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           
-          // จัดการคำสั่งซื้อ - นับจาก status ที่ต้องการแสดง
+          // จัดการคำสั่งซื้อ - แยกตามสตาฟที่ login
           const allOrders = orders as any[];
-          const pendingOrders = allOrders.filter(o => 
-            o.status === 'รอดำเนินการ' || 
-            o.status === 'รอการยืนยัน' ||
-            o.status === 'กำลังดำเนินการ'
-          ).length;
+          const currentStaffId = currentUser?.uid;
+          
+          // ออเดอร์ที่สตาฟคนนี้รับผิดชอบ (ยกเว้นที่เสร็จแล้ว)
+          const myOrders = allOrders.filter(o => 
+            o.assignedTo === currentStaffId && 
+            o.status !== 'เสร็จสิ้น' && 
+            o.status !== 'การจัดส่งสำเร็จ'
+            // ไม่กรอง 'กำลังเตรียมสินค้า' ออก
+          );
+          
+          // ออเดอร์ที่ยังไม่มีคนรับผิดชอบ (ทุกคนเห็นได้)
+          const unassignedOrders = allOrders.filter(o => 
+            !o.assignedTo && (
+              o.status === 'รอดำเนินการ' || 
+              o.status === 'รอการยืนยัน' ||
+              o.status === 'กำลังดำเนินการ'
+            )
+          );
           
           const todayOrders = allOrders.filter(o => {
             const orderDate = o.createdAt?.toDate();
             return orderDate && orderDate >= today;
           }).length;
           
-          const preparingOrders = allOrders.filter(o => o.status === 'กำลังเตรียมสินค้า').length;
-          const completedOrders = allOrders.filter(o => o.status === 'การจัดส่งสำเร็จ').length;
-          const totalOrders = allOrders.length;
+          const myPreparingOrders = myOrders.filter(o => o.status === 'กำลังเตรียมสินค้า').length;
+          const myCompletedOrders = myOrders.filter(o => o.status === 'การจัดส่งสำเร็จ').length;
+          const totalMyOrders = myOrders.length;
 
           setMetrics({
-            todayOrders: pendingOrders,  // เปลี่ยนเป็น pending orders
-            completedOrders: preparingOrders,
-            totalOrders,
+            todayOrders: unassignedOrders.length,  // ออเดอร์ที่รอรับงาน
+            completedOrders: myPreparingOrders,    // ออเดอร์ที่กำลังทำ
+            totalOrders: totalMyOrders,             // ออเดอร์ทั้งหมดของฉัน
           });
 
-          // Load activities from recent orders
-          const recentOrders: ActivityItem[] = (orders as any[])
+          // Load activities from my recent orders
+          const recentOrders: ActivityItem[] = [...myOrders, ...unassignedOrders]
             .sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate())
             .slice(0, 5)
             .map((order, index): ActivityItem => {
@@ -117,6 +130,9 @@ const StaffDashboard = () => {
               } else if (order.status === 'กำลังจัดส่ง') {
                 type = 'shipping';
                 icon = '🚚';
+              } else if (order.assignedTo === currentStaffId) {
+                type = 'pending';
+                icon = '👤'; // ออเดอร์ของฉัน
               }
 
               return {
@@ -288,7 +304,7 @@ const StaffDashboard = () => {
                   <StatsCard
                     title="จัดการคำสั่งซื้อ"
                     value={metrics.todayOrders}
-                    subtitle="รายการเบิกทั้งหมด"
+                    subtitle="รอจัดการคำสั่งซื้อ"
                     icon="📦"
                     gradient="linear-gradient(135deg, #1E3A8A 0%, #3B82F6 50%, #60A5FA 100%)"
                     delay={0}
@@ -299,7 +315,7 @@ const StaffDashboard = () => {
                   <StatsCard
                     title="สำเร็จ"
                     value={metrics.completedOrders}
-                    subtitle="กำลังเตรียมสินค้า"
+                    subtitle="ทำรายการเบิกสำเร็จ"
                     icon="✅"
                     gradient="linear-gradient(135deg, #10B981, #6EE7B7)"
                     delay={0.1}
@@ -309,8 +325,8 @@ const StaffDashboard = () => {
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <StatsCard
                     title="ทั้งหมด"
-                    value={metrics.totalOrders}
-                    subtitle="รอดำเนินการ"
+                    value={metrics.todayOrders + metrics.completedOrders}
+                    subtitle="จัดการคำสั่งซื้อทั้งหมด"
                     icon="📋"
                     gradient="linear-gradient(135deg, #F59E0B, #FCD34D)"
                     delay={0.2}
