@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -25,6 +25,7 @@ import {
   Avatar,
   useTheme,
   alpha,
+  IconButton,
 } from '@mui/material';
 import {
   LocalShipping,
@@ -90,6 +91,22 @@ const PickingTab: React.FC<PickingTabProps> = ({
   onMarkAsDelivered,
 }) => {
   const theme = useTheme();
+  
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // รายการที่จะแสดงในหน้าปัจจุบัน
+  const displayedRecords = pickingRecords.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -341,7 +358,7 @@ const PickingTab: React.FC<PickingTabProps> = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {pickingRecords.map((record, index) => (
+                {displayedRecords.map((record, index) => (
                   <TableRow
                     key={record.id}
                     sx={{
@@ -513,6 +530,56 @@ const PickingTab: React.FC<PickingTabProps> = ({
               </TableBody>
             </Table>
           </TableContainer>
+          {pickingRecords.length > 5 && (
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              borderTop: '1px solid #E2E8F0',
+              py: 2,
+              gap: 1
+            }}>
+              <IconButton
+                onClick={(e) => handleChangePage(e, page - 1)}
+                disabled={page === 0}
+                sx={{ 
+                  color: page === 0 ? '#ccc' : '#3B82F6',
+                  '&:hover': { backgroundColor: 'rgba(59, 130, 246, 0.1)' }
+                }}
+              >
+                {'<'}
+              </IconButton>
+              
+              {Array.from({ length: Math.ceil(pickingRecords.length / rowsPerPage) }, (_, index) => (
+                <IconButton
+                  key={index}
+                  onClick={(e) => handleChangePage(e, index)}
+                  sx={{
+                    color: page === index ? '#3B82F6' : '#666',
+                    backgroundColor: page === index ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                    '&:hover': { backgroundColor: 'rgba(59, 130, 246, 0.1)' },
+                    fontSize: '0.875rem',
+                    fontWeight: page === index ? 600 : 400,
+                    minWidth: 32,
+                    height: 32
+                  }}
+                >
+                  {index + 1}
+                </IconButton>
+              ))}
+              
+              <IconButton
+                onClick={(e) => handleChangePage(e, page + 1)}
+                disabled={page >= Math.ceil(pickingRecords.length / rowsPerPage) - 1}
+                sx={{ 
+                  color: page >= Math.ceil(pickingRecords.length / rowsPerPage) - 1 ? '#ccc' : '#3B82F6',
+                  '&:hover': { backgroundColor: 'rgba(59, 130, 246, 0.1)' }
+                }}
+              >
+                {'>'}
+              </IconButton>
+            </Box>
+          )}
         </Paper>
       )}
 

@@ -17,6 +17,7 @@ import {
   alpha,
   Grid,
   Chip,
+  IconButton,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {
@@ -54,6 +55,19 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ onNavigateToProduct
   const [notifications, setNotifications] = useState<LowStockNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   useEffect(() => {
     loadLowStockNotifications();
@@ -108,6 +122,9 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ onNavigateToProduct
     }
     return true;
   });
+
+  // รายการที่จะแสดงในหน้าปัจจุบัน
+  const displayedNotifications = filteredNotifications.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -378,7 +395,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ onNavigateToProduct
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredNotifications.length === 0 ? (
+              {displayedNotifications.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
                     <Avatar
@@ -401,7 +418,7 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ onNavigateToProduct
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredNotifications.map((notification, index) => (
+                displayedNotifications.map((notification, index) => (
                   <TableRow
                     key={notification.id}
                     sx={{
@@ -486,6 +503,56 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ onNavigateToProduct
             </TableBody>
           </Table>
         </TableContainer>
+        {filteredNotifications.length > 5 && (
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderTop: '1px solid #E2E8F0',
+            py: 2,
+            gap: 1
+          }}>
+            <IconButton
+              onClick={(e) => handleChangePage(e, page - 1)}
+              disabled={page === 0}
+              sx={{
+                color: page === 0 ? '#ccc' : '#F59E0B',
+                '&:hover': { backgroundColor: 'rgba(245, 158, 11, 0.1)' }
+              }}
+            >
+              {'<'}
+            </IconButton>
+            
+            {Array.from({ length: Math.ceil(filteredNotifications.length / rowsPerPage) }, (_, index) => (
+              <IconButton
+                key={index}
+                onClick={(e) => handleChangePage(e, index)}
+                sx={{
+                  color: page === index ? '#F59E0B' : '#666',
+                  backgroundColor: page === index ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
+                  '&:hover': { backgroundColor: 'rgba(245, 158, 11, 0.1)' },
+                  fontSize: '0.875rem',
+                  fontWeight: page === index ? 600 : 400,
+                  minWidth: 32,
+                  height: 32
+                }}
+              >
+                {index + 1}
+              </IconButton>
+            ))}
+            
+            <IconButton
+              onClick={(e) => handleChangePage(e, page + 1)}
+              disabled={page >= Math.ceil(filteredNotifications.length / rowsPerPage) - 1}
+              sx={{
+                color: page >= Math.ceil(filteredNotifications.length / rowsPerPage) - 1 ? '#ccc' : '#F59E0B',
+                '&:hover': { backgroundColor: 'rgba(245, 158, 11, 0.1)' }
+              }}
+            >
+              {'>'}
+            </IconButton>
+          </Box>
+        )}
       </Paper>
     </Box>
   );

@@ -10,6 +10,7 @@ import {
   TableHead,
   TableRow,
   Button,
+  IconButton,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { getAll, update } from '../../services/firestore';
@@ -43,6 +44,22 @@ const OrdersTab = () => {
   const { currentUser } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // รายการที่จะแสดงในหน้าปัจจุบัน
+  const displayedOrders = orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleAssignOrder = async (orderId: string) => {
     // ไปที่หน้าเบิกสินค้าโดยตรง (ไม่ต้องมอบหมายล่วงหน้า)
@@ -166,7 +183,7 @@ const OrdersTab = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {orders.map((order) => {
+              {displayedOrders.map((order) => {
                 return (
                   <TableRow 
                     key={order.id}
@@ -242,6 +259,57 @@ const OrdersTab = () => {
             </TableBody>
             </Table>
           </TableContainer>
+          {orders.length > 5 && (
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              borderTop: '1px solid #E2E8F0',
+              py: 2,
+              gap: 1,
+              mt: 1
+            }}>
+              <IconButton
+                onClick={(e) => handleChangePage(e, page - 1)}
+                disabled={page === 0}
+                sx={{ 
+                  color: page === 0 ? '#ccc' : '#10B981',
+                  '&:hover': { backgroundColor: 'rgba(16, 185, 129, 0.1)' }
+                }}
+              >
+                {'<'}
+              </IconButton>
+              
+              {Array.from({ length: Math.ceil(orders.length / rowsPerPage) }, (_, index) => (
+                <IconButton
+                  key={index}
+                  onClick={(e) => handleChangePage(e, index)}
+                  sx={{
+                    color: page === index ? '#10B981' : '#666',
+                    backgroundColor: page === index ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                    '&:hover': { backgroundColor: 'rgba(16, 185, 129, 0.1)' },
+                    fontSize: '0.875rem',
+                    fontWeight: page === index ? 600 : 400,
+                    minWidth: 32,
+                    height: 32
+                  }}
+                >
+                  {index + 1}
+                </IconButton>
+              ))}
+              
+              <IconButton
+                onClick={(e) => handleChangePage(e, page + 1)}
+                disabled={page >= Math.ceil(orders.length / rowsPerPage) - 1}
+                sx={{ 
+                  color: page >= Math.ceil(orders.length / rowsPerPage) - 1 ? '#ccc' : '#10B981',
+                  '&:hover': { backgroundColor: 'rgba(16, 185, 129, 0.1)' }
+                }}
+              >
+                {'>'}
+              </IconButton>
+            </Box>
+          )}
         </Box>
       )}
     </Box>

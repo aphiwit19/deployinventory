@@ -128,6 +128,22 @@ function Dashboard() {
     );
   });
 
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(12);
+
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // รายการที่จะแสดงในหน้าปัจจุบัน
+  const displayedProducts = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   return (
     <Container maxWidth="xl" sx={{ py: 4, px: { xs: 2, sm: 3 } }}>
       {/* Header */}
@@ -327,7 +343,7 @@ function Dashboard() {
             },
           }}
         >
-        {filtered.map((product) => (
+        {displayedProducts.map((product) => (
           <Card
             key={product.id}
             sx={{
@@ -422,6 +438,57 @@ function Dashboard() {
         ))}
       </Box>
       </Paper>
+
+      {/* Pagination */}
+      {filtered.length > 8 && (
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          py: 3,
+          gap: 1
+        }}>
+          <IconButton
+            onClick={(e) => handleChangePage(e, page - 1)}
+            disabled={page === 0}
+            sx={{ 
+              color: page === 0 ? '#ccc' : '#1E3A8A',
+              '&:hover': { backgroundColor: 'rgba(30, 58, 138, 0.1)' }
+            }}
+          >
+            {'<'}
+          </IconButton>
+          
+          {Array.from({ length: Math.ceil(filtered.length / rowsPerPage) }, (_, index) => (
+            <IconButton
+              key={index}
+              onClick={(e) => handleChangePage(e, index)}
+              sx={{
+                color: page === index ? '#1E3A8A' : '#666',
+                backgroundColor: page === index ? 'rgba(30, 58, 138, 0.1)' : 'transparent',
+                '&:hover': { backgroundColor: 'rgba(30, 58, 138, 0.1)' },
+                fontSize: '0.875rem',
+                fontWeight: page === index ? 600 : 400,
+                minWidth: 32,
+                height: 32
+              }}
+            >
+              {index + 1}
+            </IconButton>
+          ))}
+          
+          <IconButton
+            onClick={(e) => handleChangePage(e, page + 1)}
+            disabled={page >= Math.ceil(filtered.length / rowsPerPage) - 1}
+            sx={{ 
+              color: page >= Math.ceil(filtered.length / rowsPerPage) - 1 ? '#ccc' : '#1E3A8A',
+              '&:hover': { backgroundColor: 'rgba(30, 58, 138, 0.1)' }
+            }}
+          >
+            {'>'}
+          </IconButton>
+        </Box>
+      )}
 
       {/* Empty State */}
       {filtered.length === 0 && (

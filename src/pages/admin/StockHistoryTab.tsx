@@ -21,6 +21,7 @@ import {
   alpha,
   Grid,
   Chip,
+  IconButton,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -58,6 +59,19 @@ const StockHistoryTab: React.FC = () => {
   const [filterType, setFilterType] = useState<'all' | 'stock_in' | 'stock_out'>('all');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   useEffect(() => {
     loadTransactions();
@@ -75,29 +89,39 @@ const StockHistoryTab: React.FC = () => {
     }
   };
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    // ค้นหาชื่อสินค้า
-    if (searchTerm && !transaction.productName.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
+  const filteredTransactions = transactions
+    .filter((transaction) => {
+      // ค้นหาชื่อสินค้า
+      if (searchTerm && !transaction.productName.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
 
-    // กรองประเภท
-    if (filterType !== 'all' && transaction.type !== filterType) {
-      return false;
-    }
+      // กรองประเภท
+      if (filterType !== 'all' && transaction.type !== filterType) {
+        return false;
+      }
 
-    // กรองวันที่
-    if (startDate && transaction.createdAt) {
-      const transactionDate = new Date(transaction.createdAt.seconds * 1000);
-      if (transactionDate < startDate) return false;
-    }
-    if (endDate && transaction.createdAt) {
-      const transactionDate = new Date(transaction.createdAt.seconds * 1000);
-      if (transactionDate > endDate) return false;
-    }
+      // กรองวันที่
+      if (startDate && transaction.createdAt) {
+        const transactionDate = new Date(transaction.createdAt.seconds * 1000);
+        if (transactionDate < startDate) return false;
+      }
+      if (endDate && transaction.createdAt) {
+        const transactionDate = new Date(transaction.createdAt.seconds * 1000);
+        if (transactionDate > endDate) return false;
+      }
 
-    return true;
-  });
+      return true;
+    })
+    .sort((a, b) => {
+      // เรียงลำดับจากวันที่ล่าสุดอยู่บน
+      const dateA = a.createdAt ? new Date(a.createdAt.seconds * 1000).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt.seconds * 1000).getTime() : 0;
+      return dateB - dateA;
+    });
+
+  // รายการที่จะแสดงในหน้าปัจจุบัน
+  const displayedTransactions = filteredTransactions.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   // คำนวณสรุปยอด
   const totalIn = filteredTransactions
@@ -389,7 +413,7 @@ const StockHistoryTab: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredTransactions.length === 0 ? (
+                {displayedTransactions.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
                       <Avatar
@@ -412,7 +436,7 @@ const StockHistoryTab: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTransactions.map((transaction, index) => (
+                  displayedTransactions.map((transaction, index) => (
                     <TableRow
                       key={transaction.id}
                       sx={{
@@ -499,6 +523,56 @@ const StockHistoryTab: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+          {filteredTransactions.length > 5 && (
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              borderTop: '1px solid #E2E8F0',
+              py: 2,
+              gap: 1
+            }}>
+              <IconButton
+                onClick={(e) => handleChangePage(e, page - 1)}
+                disabled={page === 0}
+                sx={{ 
+                  color: page === 0 ? '#ccc' : '#8B5CF6',
+                  '&:hover': { backgroundColor: 'rgba(139, 92, 246, 0.1)' }
+                }}
+              >
+                {'<'}
+              </IconButton>
+              
+              {Array.from({ length: Math.ceil(filteredTransactions.length / rowsPerPage) }, (_, index) => (
+                <IconButton
+                  key={index}
+                  onClick={(e) => handleChangePage(e, index)}
+                  sx={{
+                    color: page === index ? '#8B5CF6' : '#666',
+                    backgroundColor: page === index ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+                    '&:hover': { backgroundColor: 'rgba(139, 92, 246, 0.1)' },
+                    fontSize: '0.875rem',
+                    fontWeight: page === index ? 600 : 400,
+                    minWidth: 32,
+                    height: 32
+                  }}
+                >
+                  {index + 1}
+                </IconButton>
+              ))}
+              
+              <IconButton
+                onClick={(e) => handleChangePage(e, page + 1)}
+                disabled={page >= Math.ceil(filteredTransactions.length / rowsPerPage) - 1}
+                sx={{ 
+                  color: page >= Math.ceil(filteredTransactions.length / rowsPerPage) - 1 ? '#ccc' : '#8B5CF6',
+                  '&:hover': { backgroundColor: 'rgba(139, 92, 246, 0.1)' }
+                }}
+              >
+                {'>'}
+              </IconButton>
+            </Box>
+          )}
         </Paper>
       </Box>
     </LocalizationProvider>

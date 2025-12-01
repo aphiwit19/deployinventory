@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -16,6 +16,7 @@ import {
   alpha,
   Paper,
   Chip,
+  IconButton,
 } from '@mui/material';
 import {
   AdminPanelSettings,
@@ -55,6 +56,22 @@ const PermissionsTab: React.FC<PermissionsTabProps> = ({
   savingId,
   onRoleChange,
 }) => {
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // รายการที่จะแสดงในหน้าปัจจุบัน
+  const displayedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   const getRoleIcon = (role?: UserRole) => {
     switch (role) {
       case 'admin':
@@ -286,7 +303,7 @@ const PermissionsTab: React.FC<PermissionsTabProps> = ({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user, index) => (
+                  displayedUsers.map((user, index) => (
                     <TableRow
                       key={user.id}
                       sx={{
@@ -385,6 +402,56 @@ const PermissionsTab: React.FC<PermissionsTabProps> = ({
               </TableBody>
             </Table>
           </TableContainer>
+          {users.length > 5 && (
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              borderTop: '1px solid #E2E8F0',
+              py: 2,
+              gap: 1
+            }}>
+              <IconButton
+                onClick={(e) => handleChangePage(e, page - 1)}
+                disabled={page === 0}
+                sx={{ 
+                  color: page === 0 ? '#ccc' : '#DC2626',
+                  '&:hover': { backgroundColor: 'rgba(220, 38, 38, 0.1)' }
+                }}
+              >
+                {'<'}
+              </IconButton>
+              
+              {Array.from({ length: Math.ceil(users.length / rowsPerPage) }, (_, index) => (
+                <IconButton
+                  key={index}
+                  onClick={(e) => handleChangePage(e, index)}
+                  sx={{
+                    color: page === index ? '#DC2626' : '#666',
+                    backgroundColor: page === index ? 'rgba(220, 38, 38, 0.1)' : 'transparent',
+                    '&:hover': { backgroundColor: 'rgba(220, 38, 38, 0.1)' },
+                    fontSize: '0.875rem',
+                    fontWeight: page === index ? 600 : 400,
+                    minWidth: 32,
+                    height: 32
+                  }}
+                >
+                  {index + 1}
+                </IconButton>
+              ))}
+              
+              <IconButton
+                onClick={(e) => handleChangePage(e, page + 1)}
+                disabled={page >= Math.ceil(users.length / rowsPerPage) - 1}
+                sx={{ 
+                  color: page >= Math.ceil(users.length / rowsPerPage) - 1 ? '#ccc' : '#DC2626',
+                  '&:hover': { backgroundColor: 'rgba(220, 38, 38, 0.1)' }
+                }}
+              >
+                {'>'}
+              </IconButton>
+            </Box>
+          )}
         </Paper>
       )}
     </Box>

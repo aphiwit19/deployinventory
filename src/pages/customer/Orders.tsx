@@ -253,21 +253,6 @@ const Orders = () => {
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
               ยังไม่มีประวัติคำสั่งซื้อ
             </Typography>
-            <Button 
-              variant="contained" 
-              onClick={() => navigate('/')}
-              sx={{
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-                background: 'linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)'
-                }
-              }}
-            >
-              เลือกสินค้าเพิ่ม
-            </Button>
           </Paper>
         )}
 

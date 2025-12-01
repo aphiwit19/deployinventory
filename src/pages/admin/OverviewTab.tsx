@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Typography,
   Box,
-  Paper,
-  Alert,
-  CircularProgress,
-  Chip,
   Card,
   CardContent,
-  IconButton,
-  Button,
+  Typography,
+  Avatar,
+  Grid,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Avatar,
+  TablePagination,
+  Alert,
+  Chip,
   LinearProgress,
   Fade,
-  TablePagination,
 } from '@mui/material';
 import {
   People,
@@ -343,25 +341,12 @@ const OverviewTab = () => {
 
   // KPI Card Component
   const KPICardComponent = ({ card }: { card: KPICard }) => {
-    const getChangeColor = (change: number) => {
-      if (change > 0) return 'success.main';
-      if (change < 0) return 'error.main';
-      return 'text.secondary';
-    };
-
-    const getChangeIcon = (change: number) => {
-      if (change > 0) return '↑';
-      if (change < 0) return '↓';
-      return '→';
-    };
-
     return (
       <Card 
         sx={{ 
-          height: '100%',
-          background: 'rgba(255,255,255,0.98)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.3)',
+          fontWeight: 700, 
+          color: 'white',
+          textShadow: '0 2px 4px rgba(0,0,0,0.3)',
           boxShadow: '0 8px 32px rgba(30, 58, 138, 0.15)',
           transition: 'all 0.3s ease',
           '&:hover': {
@@ -393,23 +378,9 @@ const OverviewTab = () => {
             {card.value}
           </Typography>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: getChangeColor(card.change),
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                fontSize: '1rem'
-              }}
-            >
-              {getChangeIcon(card.change)} {Math.abs(card.change)}%
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.95rem' }}>
-              {card.changeText}
-            </Typography>
-          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.95rem' }}>
+            {card.changeText}
+          </Typography>
         </CardContent>
       </Card>
     );
@@ -676,7 +647,7 @@ const OverviewTab = () => {
                       onPageChange={handleStockAlertPageChange}
                       onRowsPerPageChange={handleStockAlertRowsPerPageChange}
                       labelRowsPerPage="รายการต่อหน้า"
-                      labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
+                      labelDisplayedRows={({ from, to, count }: { from: number; to: number; count: number }) => `${from}-${to} จาก ${count}`}
                     />
                   </TableContainer>
                 )}
