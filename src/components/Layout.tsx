@@ -20,7 +20,7 @@ import {
   LocationOn,
   AccessTime,
 } from '@mui/icons-material';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link as RouterLink } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -164,7 +164,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Typography>
               <Stack spacing={2}>
                 <Link
-                  href="/"
+                  component={RouterLink}
+                  to="/"
                   sx={{
                     color: alpha('#ffffff', 0.8),
                     textDecoration: 'none',
@@ -176,7 +177,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   หน้าแรก
                 </Link>
                 <Link
-                  href="/cart"
+                  component={RouterLink}
+                  to="/cart"
                   sx={{
                     color: alpha('#ffffff', 0.8),
                     textDecoration: 'none',
@@ -188,7 +190,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   ตะกร้าสินค้า
                 </Link>
                 <Link
-                  href="/orders"
+                  component={RouterLink}
+                  to="/orders"
                   sx={{
                     color: alpha('#ffffff', 0.8),
                     textDecoration: 'none',
@@ -200,7 +203,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   ประวัติคำสั่งซื้อ
                 </Link>
                 <Link
-                  href="/profile"
+                  component={RouterLink}
+                  to="/profile"
                   sx={{
                     color: alpha('#ffffff', 0.8),
                     textDecoration: 'none',
@@ -221,7 +225,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Typography>
               <Stack spacing={2}>
                 <Link
-                  href="#"
+                  component={RouterLink}
+                  to="#"
                   sx={{
                     color: alpha('#ffffff', 0.8),
                     textDecoration: 'none',
@@ -233,7 +238,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   วิธีการสั่งซื้อ
                 </Link>
                 <Link
-                  href="#"
+                  component={RouterLink}
+                  to="#"
                   sx={{
                     color: alpha('#ffffff', 0.8),
                     textDecoration: 'none',
@@ -245,7 +251,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   การจัดส่งสินค้า
                 </Link>
                 <Link
-                  href="#"
+                  component={RouterLink}
+                  to="#"
                   sx={{
                     color: alpha('#ffffff', 0.8),
                     textDecoration: 'none',
@@ -257,7 +264,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   นโยบายคืนสินค้า
                 </Link>
                 <Link
-                  href="#"
+                  component={RouterLink}
+                  to="#"
                   sx={{
                     color: alpha('#ffffff', 0.8),
                     textDecoration: 'none',
@@ -322,7 +330,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Typography>
             <Stack direction="row" spacing={3}>
               <Link
-                href="#"
+                component={RouterLink}
+                to="#"
                 sx={{
                   color: alpha('#ffffff', 0.6),
                   textDecoration: 'none',
@@ -335,7 +344,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 นโยบายความเป็นส่วนตัว
               </Link>
               <Link
-                href="#"
+                component={RouterLink}
+                to="#"
                 sx={{
                   color: alpha('#ffffff', 0.6),
                   textDecoration: 'none',
